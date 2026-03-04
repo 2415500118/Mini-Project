@@ -393,7 +393,8 @@ if __name__ == "__main__":
 
     print("\nVoxGuard - Speaker Verification System\n")
 
-    required_files = ["model_best.pth", "voice_db.pkl"]    missing_files = [f for f in required_files if not Path(f).exists()]
+    required_files = ["model_best.pth", "voice_db.pkl"]
+    missing_files = [f for f in required_files if not Path(f).exists()]
     if missing_files:
         print(f"Error: Missing files - {', '.join(missing_files)}")
         sys.exit(1)
