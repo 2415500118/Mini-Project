@@ -1057,7 +1057,9 @@ footer{
 /*═══════════════════════════════════════════════════════════════
   CONFIG  (adjust to match your FastAPI backend)
 ═══════════════════════════════════════════════════════════════*/
-const API_BASE = 'http://localhost:8081';
+const API_BASE = window.location.origin === 'null' || window.location.protocol === 'file:'
+  ? 'http://localhost:8081'
+  : '';
 
 /*═══════════════════════════════════════════════════════════════
   CUSTOM CURSOR

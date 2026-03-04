@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 import torch
 import torch.nn as nn
 import pickle
@@ -225,6 +225,10 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
+    return FileResponse("index.html", media_type="text/html")
+
+@app.get("/status")
+async def status():
     return {
         "status": "online",
         "device": str(device),
@@ -409,9 +413,10 @@ if __name__ == "__main__":
             print("Failed to install dependencies")
             sys.exit(1)
 
-    print("Starting server at http://localhost:8081\n")
+    port = int(os.environ.get("PORT", 8081))
+    print(f"Starting server at http://localhost:{port}\n")
     try:
-        uvicorn.run("api:app", host="0.0.0.0", port=8081, reload=False, log_level="info")
+        uvicorn.run("api:app", host="0.0.0.0", port=port, reload=False, log_level="info")
     except KeyboardInterrupt:
         print("\nServer stopped")
         sys.exit(0)
