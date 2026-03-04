@@ -10,6 +10,7 @@ import librosa
 import os
 import tempfile
 from pathlib import Path
+from resemblyzer import VoiceEncoder, preprocess_wav
 
 N_MELS = 128
 FIXED_LENGTH = 128
@@ -119,7 +120,6 @@ def _compute_log_mel(audio, sr, n_mels=N_MELS):
         n_fft=N_FFT,
         hop_length=HOP_LENGTH
     )
-
     return librosa.power_to_db(mel_spec, ref=np.max).astype(np.float32)
 
 def _fixed_crop(log_mel_spec, start_idx, fixed_length=FIXED_LENGTH):
@@ -148,13 +148,13 @@ def audio_to_melspectrogram_crops(file_path, sample_rate=16000, n_mels=N_MELS, f
     start_positions = np.linspace(0, max_start, num=num_crops, dtype=int)
     return [_fixed_crop(log_mel_spec, int(start), fixed_length=fixed_length) for start in start_positions]
 
-def get_embedding(file_path, model, device):
-    spec = audio_to_melspectrogram(file_path)
-    spec_tensor = torch.tensor(spec).unsqueeze(0).unsqueeze(0).to(device)
-    model.eval()
-    with torch.no_grad():
-        _, embedding = model(spec_tensor)
-    return embedding.squeeze(0).cpu().numpy()
+def get_embedding(file_path, model=None, device=None, num_crops=5):
+    wav = preprocess_wav(Path(file_path))
+    emb = resemblyzer_encoder.embed_utterance(wav)
+    norm = np.linalg.norm(emb)
+    if norm > 1e-8:
+        emb = emb / norm
+    return emb.astype(np.float32)
 
 def identify_speaker(audio_path, model, voice_db, device, threshold=0.80):
     from torch.nn.functional import cosine_similarity
@@ -183,6 +183,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = None
 voice_db = None
 NUM_CLASSES = None
+resemblyzer_encoder = None
 
 def _safe_torch_load(checkpoint_path, map_location):
     try:
@@ -192,18 +193,21 @@ def _safe_torch_load(checkpoint_path, map_location):
 
 @asynccontextmanager
 async def lifespan(app):
-    global model, voice_db, NUM_CLASSES
+    global model, voice_db, NUM_CLASSES, resemblyzer_encoder
     with open("voice_db.pkl", "rb") as f:
         raw_voice_db = pickle.load(f)
     voice_db = {str(name): np.asarray(emb, dtype=np.float32) for name, emb in raw_voice_db.items()}
     NUM_CLASSES = len(voice_db)
     print(f"[OK] Voice database loaded: {NUM_CLASSES} speakers")
     print(f"  Speakers: {sorted(list(voice_db.keys()))}")
+    resemblyzer_encoder = VoiceEncoder(device=str(device))
+    print(f"[OK] Resemblyzer encoder loaded on {device}")
     checkpoint_candidates = ["model_best.pth", "model.pth"]
     checkpoint_path = next((path for path in checkpoint_candidates if os.path.exists(path)), None)
     if checkpoint_path is None:
         raise FileNotFoundError("Neither model_best.pth nor model.pth was found")
-    state_dict = _safe_torch_load(checkpoint_path, map_location=device)
+    raw_checkpoint = _safe_torch_load(checkpoint_path, map_location=device)
+    state_dict = raw_checkpoint.get("model_state_dict", raw_checkpoint) if isinstance(raw_checkpoint, dict) else raw_checkpoint
     model = SpeakerCNN(num_classes=NUM_CLASSES, embedding_dim=512).to(device)
     model.load_state_dict(state_dict)
     model.eval()

@@ -463,6 +463,38 @@ select option{background:var(--card)}
   30%,50%,70%{transform:translateX(-6px)}
   40%,60%{transform:translateX(6px)}
 }
+.wiki-redirect-wrap{
+  margin-top:22px;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+}
+.wiki-redirect-wrap.visible{display:flex;}
+.wiki-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 28px;
+  background:linear-gradient(135deg,#0d3b66,#1a5fa8);
+  border:1px solid #00e5ff88;
+  border-radius:8px;
+  color:#fff;
+  font-family:var(--font-hd);font-size:.85rem;font-weight:700;letter-spacing:.1em;
+  text-decoration:none;
+  cursor:pointer;
+  transition:all .25s;
+  box-shadow:0 0 18px #00e5ff33;
+}
+.wiki-btn:hover{
+  background:linear-gradient(135deg,#1a5fa8,#00b4d8);
+  box-shadow:0 0 28px #00e5ff66;
+  color:#fff;
+  transform:translateY(-2px);
+}
+.wiki-btn svg{width:18px;height:18px;flex-shrink:0;}
+.wiki-countdown{
+  font-family:var(--font-hd);font-size:.75rem;color:var(--dim);
+  letter-spacing:.08em;
+}
 
 /* Similarity meter */
 .sim-meter{
@@ -967,6 +999,19 @@ footer{
           <div class="top-matches-title">Top Matches</div>
           <div id="top-matches-list"></div>
         </div>
+
+        <!-- Wikipedia Redirect -->
+        <div class="wiki-redirect-wrap" id="wiki-redirect-wrap">
+          <a id="wiki-btn" class="wiki-btn" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            VIEW ON WIKIPEDIA
+          </a>
+          <div class="wiki-countdown" id="wiki-countdown"></div>
+        </div>
       </div>
     </div>
 
@@ -1386,6 +1431,11 @@ identifyBtn.addEventListener('click', async ()=>{
   currentAudioFile = uploadedFile;
   log('Identifying speaker…','info');
 
+  // Reset Wikipedia widget from previous run
+  if(window._wikiTimer) clearInterval(window._wikiTimer);
+  const _ww = document.getElementById('wiki-redirect-wrap');
+  if(_ww){ _ww.classList.remove('visible'); }
+
   try {
     const fd = new FormData();
     fd.append('audio', uploadedFile);
@@ -1473,6 +1523,30 @@ function showIdentificationResult(r){
     log(`Speaker identified: ${r.speaker} (sim=${sim.toFixed(4)})`, 'ok');
     toast(`✅ Identified as ${r.speaker}`, '');
     launchParticles();
+
+    // Wikipedia redirect
+    const wikiWrap   = document.getElementById('wiki-redirect-wrap');
+    const wikiBtn    = document.getElementById('wiki-btn');
+    const wikiCount  = document.getElementById('wiki-countdown');
+    const wikiName   = r.speaker.replace(/ /g,'_');
+    const wikiURL    = `https://en.wikipedia.org/wiki/${wikiName}`;
+    wikiBtn.href     = wikiURL;
+    wikiBtn.textContent = '';
+    wikiBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> VIEW ${r.speaker.replace(/_/g,' ').toUpperCase()} ON WIKIPEDIA`;
+    wikiWrap.classList.add('visible');
+    if(window._wikiTimer) clearInterval(window._wikiTimer);
+    let secs = 3;
+    wikiCount.textContent = `Opening in ${secs}s…`;
+    window._wikiTimer = setInterval(()=>{
+      secs--;
+      if(secs > 0){
+        wikiCount.textContent = `Opening in ${secs}s…`;
+      } else {
+        clearInterval(window._wikiTimer);
+        wikiCount.textContent = 'Opening Wikipedia…';
+        window.open(wikiURL, '_blank', 'noopener');
+      }
+    }, 1000);
   } else {
     // No speaker identified
     status.textContent  = 'NO MATCH FOUND';
