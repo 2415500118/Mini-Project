@@ -3,7 +3,6 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 import torch
-import torch.nn as nn
 import pickle
 import numpy as np
 import librosa
@@ -16,86 +15,6 @@ N_MELS = 128
 FIXED_LENGTH = 128
 N_FFT = 512
 HOP_LENGTH = 256
-
-class SpeakerCNN(nn.Module):
-    def __init__(self, num_classes, embedding_dim=512):
-        super(SpeakerCNN, self).__init__()
-        
-        self.conv_block1 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            nn.Dropout2d(0.1)
-        )
-        
-        self.conv_block2 = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            nn.Dropout2d(0.2)
-        )
-        
-        self.conv_block3 = nn.Sequential(
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            nn.Dropout2d(0.3)
-        )
-
-        self.conv_block4 = nn.Sequential(
-            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            nn.Dropout2d(0.4)
-        )
-
-        self.conv_block5 = nn.Sequential(
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            nn.Dropout2d(0.5)
-        )
-        
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.embedding_layer = nn.Sequential(
-            nn.Linear(512, embedding_dim),
-            nn.BatchNorm1d(embedding_dim),
-            nn.ReLU(),
-            nn.Dropout(0.5)
-        )
-        self.classifier = nn.Linear(embedding_dim, num_classes)
-    
-    def forward(self, x):
-        x = self.conv_block1(x)
-        x = self.conv_block2(x)
-        x = self.conv_block3(x)
-        x = self.conv_block4(x)
-        x = self.conv_block5(x)
-        x = self.global_avg_pool(x)
-        x = x.view(x.size(0), -1)
-        embedding = self.embedding_layer(x)
-        output = self.classifier(embedding)
-        return output, embedding
 
 def _load_and_clean_audio(file_path, sample_rate=16000):
     audio, sr = librosa.load(file_path, sr=sample_rate, mono=True)
@@ -148,7 +67,7 @@ def audio_to_melspectrogram_crops(file_path, sample_rate=16000, n_mels=N_MELS, f
     start_positions = np.linspace(0, max_start, num=num_crops, dtype=int)
     return [_fixed_crop(log_mel_spec, int(start), fixed_length=fixed_length) for start in start_positions]
 
-def get_embedding(file_path, model=None, device=None, num_crops=5):
+def get_embedding(file_path):
     wav = preprocess_wav(Path(file_path))
     emb = resemblyzer_encoder.embed_utterance(wav)
     norm = np.linalg.norm(emb)
@@ -156,15 +75,12 @@ def get_embedding(file_path, model=None, device=None, num_crops=5):
         emb = emb / norm
     return emb.astype(np.float32)
 
-def identify_speaker(audio_path, model, voice_db, device, threshold=0.80):
-    from torch.nn.functional import cosine_similarity
-    input_embedding = get_embedding(audio_path, model, device)
-    input_tensor = torch.tensor(input_embedding).unsqueeze(0)
+def identify_speaker(audio_path, voice_db, threshold=0.80):
+    input_embedding = get_embedding(audio_path)
     best_speaker = None
     best_similarity = -1
     for speaker_name, db_embedding in voice_db.items():
-        db_tensor = torch.tensor(db_embedding).unsqueeze(0)
-        similarity = cosine_similarity(input_tensor, db_tensor).item()
+        similarity = float(np.dot(input_embedding, db_embedding))
         if similarity > best_similarity:
             best_similarity = similarity
             best_speaker = speaker_name
@@ -180,20 +96,13 @@ def identify_speaker(audio_path, model, voice_db, device, threshold=0.80):
     }
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = None
 voice_db = None
 NUM_CLASSES = None
 resemblyzer_encoder = None
 
-def _safe_torch_load(checkpoint_path, map_location):
-    try:
-        return torch.load(checkpoint_path, map_location=map_location, weights_only=True)
-    except TypeError:
-        return torch.load(checkpoint_path, map_location=map_location)
-
 @asynccontextmanager
 async def lifespan(app):
-    global model, voice_db, NUM_CLASSES, resemblyzer_encoder
+    global voice_db, NUM_CLASSES, resemblyzer_encoder
     with open("voice_db.pkl", "rb") as f:
         raw_voice_db = pickle.load(f)
     voice_db = {str(name): np.asarray(emb, dtype=np.float32) for name, emb in raw_voice_db.items()}
@@ -202,15 +111,6 @@ async def lifespan(app):
     print(f"  Speakers: {sorted(list(voice_db.keys()))}")
     resemblyzer_encoder = VoiceEncoder(device=str(device))
     print(f"[OK] Resemblyzer encoder loaded on {device}")
-    checkpoint_path = "model_best.pth"
-    if not os.path.exists(checkpoint_path):
-        raise FileNotFoundError("model_best.pth not found")
-    raw_checkpoint = _safe_torch_load(checkpoint_path, map_location=device)
-    state_dict = raw_checkpoint.get("model_state_dict", raw_checkpoint) if isinstance(raw_checkpoint, dict) else raw_checkpoint
-    model = SpeakerCNN(num_classes=NUM_CLASSES, embedding_dim=512).to(device)
-    model.load_state_dict(state_dict)
-    model.eval()
-    print(f"[OK] Model loaded successfully from {checkpoint_path} on {device}")
     yield
 
 app = FastAPI(title="VoxGuard API", lifespan=lifespan)
@@ -262,16 +162,12 @@ async def authenticate_speaker(
         tmp_file.write(content)
         tmp_path = tmp_file.name
     try:
-        from torch.nn.functional import cosine_similarity
-        input_embedding = get_embedding(tmp_path, model, device)
-        input_tensor = torch.tensor(input_embedding).unsqueeze(0)
+        input_embedding = get_embedding(tmp_path)
         claimed_db_embedding = voice_db[speaker]
-        claimed_tensor = torch.tensor(claimed_db_embedding).unsqueeze(0)
-        similarity = cosine_similarity(input_tensor, claimed_tensor).item()
+        similarity = float(np.dot(input_embedding, claimed_db_embedding))
         all_scores = []
         for db_embedding in voice_db.values():
-            db_tensor = torch.tensor(db_embedding).unsqueeze(0)
-            all_scores.append(cosine_similarity(input_tensor, db_tensor).item())
+            all_scores.append(float(np.dot(input_embedding, db_embedding)))
         all_scores = sorted(all_scores, reverse=True)
         top1 = all_scores[0] if len(all_scores) > 0 else similarity
         top2 = all_scores[1] if len(all_scores) > 1 else -1.0
@@ -306,16 +202,13 @@ async def verify_speaker(audio: UploadFile = File(...), threshold: float = 0.60)
         tmp_file.write(content)
         tmp_path = tmp_file.name
     try:
-        from torch.nn.functional import cosine_similarity
-        input_embedding = get_embedding(tmp_path, model, device)
-        input_tensor = torch.tensor(input_embedding).unsqueeze(0)
+        input_embedding = get_embedding(tmp_path)
         similarities = []
         for speaker_name, db_embedding in voice_db.items():
-            db_tensor = torch.tensor(db_embedding).unsqueeze(0)
-            similarity = cosine_similarity(input_tensor, db_tensor).item()
+            similarity = float(np.dot(input_embedding, db_embedding))
             similarities.append({
                 "speaker": speaker_name,
-                "similarity": round(float(similarity), 4),
+                "similarity": round(similarity, 4),
                 "confidence": round(min(100, max(0, similarity * 100)), 2)
             })
         similarities.sort(key=lambda x: x["similarity"], reverse=True)
@@ -370,7 +263,7 @@ async def enroll_speaker(audio: UploadFile = File(...), speaker_name: str = None
         tmp_file.write(content)
         tmp_path = tmp_file.name
     try:
-        embedding = get_embedding(tmp_path, model, device)
+        embedding = get_embedding(tmp_path)
         voice_db[speaker_name] = embedding
         with open("voice_db.pkl", "wb") as f:
             pickle.dump(voice_db, f)
@@ -393,7 +286,7 @@ if __name__ == "__main__":
 
     print("\nVoxGuard - Speaker Verification System\n")
 
-    required_files = ["model_best.pth", "voice_db.pkl"]
+    required_files = ["voice_db.pkl"]
     missing_files = [f for f in required_files if not Path(f).exists()]
     if missing_files:
         print(f"Error: Missing files - {', '.join(missing_files)}")
