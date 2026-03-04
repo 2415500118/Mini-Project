@@ -1208,7 +1208,7 @@ drawWave();
   SPECTROGRAM CANVAS (animated faux spectrogram)
 ═══════════════════════════════════════════════════════════════*/
 const sCanvas = document.getElementById('spec-canvas');
-const sCtx    = sCanvas.getContext('2d');
+const sCtx    = sCanvas.getContext('2d', { willReadFrequently: true });
 let   specCols = [];
 
 function resizeSpec(){

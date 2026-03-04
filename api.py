@@ -127,6 +127,11 @@ app.add_middleware(
 async def root():
     return FileResponse("index.html", media_type="text/html")
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    from fastapi.responses import Response
+    return Response(status_code=204)
+
 @app.get("/status")
 async def status():
     return {
