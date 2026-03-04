@@ -202,10 +202,9 @@ async def lifespan(app):
     print(f"  Speakers: {sorted(list(voice_db.keys()))}")
     resemblyzer_encoder = VoiceEncoder(device=str(device))
     print(f"[OK] Resemblyzer encoder loaded on {device}")
-    checkpoint_candidates = ["model_best.pth", "model.pth"]
-    checkpoint_path = next((path for path in checkpoint_candidates if os.path.exists(path)), None)
-    if checkpoint_path is None:
-        raise FileNotFoundError("Neither model_best.pth nor model.pth was found")
+    checkpoint_path = "model_best.pth"
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError("model_best.pth not found")
     raw_checkpoint = _safe_torch_load(checkpoint_path, map_location=device)
     state_dict = raw_checkpoint.get("model_state_dict", raw_checkpoint) if isinstance(raw_checkpoint, dict) else raw_checkpoint
     model = SpeakerCNN(num_classes=NUM_CLASSES, embedding_dim=512).to(device)
@@ -383,5 +382,39 @@ async def enroll_speaker(audio: UploadFile = File(...), speaker_name: str = None
         os.unlink(tmp_path)
 
 if __name__ == "__main__":
+    import subprocess
+    import sys
+    from pathlib import Path
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8081)
+
+    print("\nVoxGuard - Speaker Verification System\n")
+
+    required_files = ["model_best.pth", "voice_db.pkl"]    missing_files = [f for f in required_files if not Path(f).exists()]
+    if missing_files:
+        print(f"Error: Missing files - {', '.join(missing_files)}")
+        sys.exit(1)
+
+    required_packages = ["fastapi", "uvicorn", "torch", "librosa", "numpy", "resemblyzer"]
+    missing_packages = []
+    for pkg in required_packages:
+        try:
+            __import__(pkg)
+        except ImportError:
+            missing_packages.append(pkg)
+    if missing_packages:
+        print(f"Installing missing packages: {', '.join(missing_packages)}")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing_packages)
+        except subprocess.CalledProcessError:
+            print("Failed to install dependencies")
+            sys.exit(1)
+
+    print("Starting server at http://localhost:8081\n")
+    try:
+        uvicorn.run("api:app", host="0.0.0.0", port=8081, reload=False, log_level="info")
+    except KeyboardInterrupt:
+        print("\nServer stopped")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\nError: {e}")
+        sys.exit(1)
