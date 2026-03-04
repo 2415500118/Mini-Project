@@ -513,6 +513,66 @@ select option{background:var(--card)}
   color:var(--c);font-weight:600;
 }
 
+/* Top Matches Section */
+.top-matches{
+  margin-top:24px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:16px;
+  position:relative;z-index:2;
+}
+.top-matches-title{
+  font-family:var(--font-mono);font-size:.7rem;
+  letter-spacing:.15em;color:var(--dim);
+  margin-bottom:14px;
+  text-transform:uppercase;
+}
+.match-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:4px;
+  margin-bottom:8px;
+  transition:border-color .3s,background .3s;
+}
+.match-item:hover{
+  border-color:var(--c);
+  background:rgba(0,229,255,.04);
+}
+.match-item:last-child{margin-bottom:0}
+.match-rank{
+  font-family:var(--font-hd);
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--dim);
+  min-width:30px;
+}
+.match-name{
+  flex:1;
+  font-family:var(--font-mono);
+  font-size:.85rem;
+  color:var(--c);
+  padding:0 12px;
+}
+.match-score{
+  font-family:var(--font-mono);
+  font-size:.8rem;
+  color:var(--g);
+  font-weight:600;
+  min-width:80px;
+  text-align:right;
+}
+.match-item.best .match-rank{color:var(--g)}
+.match-item.best .match-name{color:var(--g);font-weight:600}
+.match-item.best{
+  border-color:var(--g);
+  background:rgba(0,255,157,.06);
+}
+
 /* Holographic ring for result */
 .holo-ring{
   width:160px;height:160px;
@@ -879,7 +939,7 @@ footer{
           <div class="sim-track">
             <div class="sim-fill" id="sim-fill"></div>
           </div>
-          <div class="sim-labels"><span>0.0</span><span id="threshold-marker">▲ 0.65</span><span>1.0</span></div>
+          <div class="sim-labels"><span>0.0</span><span id="threshold-marker">▲ 0.60</span><span>1.0</span></div>
         </div>
 
         <!-- Detail chips -->
@@ -900,6 +960,12 @@ footer{
             <div class="chip-label">STATUS</div>
             <div class="chip-val" id="chip-status">—</div>
           </div>
+        </div>
+
+        <!-- Top Matches -->
+        <div class="top-matches" id="top-matches" style="display:none">
+          <div class="top-matches-title">Top Matches</div>
+          <div id="top-matches-list"></div>
         </div>
       </div>
     </div>
@@ -946,7 +1012,7 @@ footer{
 /*═══════════════════════════════════════════════════════════════
   CONFIG  (adjust to match your FastAPI backend)
 ═══════════════════════════════════════════════════════════════*/
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://localhost:8081';
 
 /*═══════════════════════════════════════════════════════════════
   CUSTOM CURSOR
@@ -1239,16 +1305,29 @@ recordBtn.addEventListener('click', async ()=>{
       analyser.fftSize = 512;
       source.connect(analyser);
 
-      mediaRecorder = new MediaRecorder(stream);
+      const preferredMime = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/ogg'
+      ].find(m => MediaRecorder.isTypeSupported(m));
+
+      mediaRecorder = preferredMime
+        ? new MediaRecorder(stream, { mimeType: preferredMime })
+        : new MediaRecorder(stream);
       recordedChunks = [];
       mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
       mediaRecorder.onstop = ()=>{
-        const blob = new Blob(recordedChunks, {type:'audio/wav'});
-        uploadedFile = new File([blob], 'recording.wav', {type:'audio/wav'});
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'm4a' : 'webm';
+        const filename = `recording.${ext}`;
+        const blob = new Blob(recordedChunks, {type: mimeType});
+        uploadedFile = new File([blob], filename, {type: mimeType});
         const icon = dropZone.querySelector('.drop-icon');
         const txt  = dropZone.querySelector('.drop-text');
         icon.textContent='🎤';
-        txt.innerHTML='<strong>recording.wav</strong> (live capture)';
+        txt.innerHTML=`<strong>${filename}</strong> (live capture)`;
         log('Recording captured','ok');
         toast('Recording ready!');
       };
@@ -1308,36 +1387,19 @@ identifyBtn.addEventListener('click', async ()=>{
   log('Identifying speaker…','info');
 
   try {
-    let result;
-    try {
-      // Call /verify endpoint for speaker identification
-      const fd = new FormData();
-      fd.append('audio', uploadedFile);
-      const res = await fetch(`${API_BASE}/verify`, {method:'POST', body:fd});
-      if(!res.ok){
-        const err = await res.json();
-        throw new Error(err.detail || 'HTTP '+res.status);
-      }
-      result = await res.json();
-      log(`Backend response: ${result.message}`, result.identified ? 'ok' : 'warn');
-    } catch(e){
-      // Demo simulation when backend offline
-      log(`Backend error: ${e.message}. Running demo mode.`, 'warn');
-      await new Promise(r=>setTimeout(r,1800));
-      const speakers = ['Aamir_Khan','Ajay_Devgn','Akshay_Kumar'];
-      const randomSpeaker = speakers[Math.floor(Math.random()*speakers.length)];
-      const sim = Math.random()*.35 + 0.5;
-      result = {
-        identified: sim >= 0.65,
-        speaker: sim >= 0.65 ? randomSpeaker : null,
-        similarity: +sim.toFixed(4),
-        message: sim >= 0.65 ? `Identified as ${randomSpeaker}` : "No matching speaker found",
-        confidence: sim >= 0.65 ? Math.round((sim - 0.65 + 0.3) / 0.3 * 100) : 0
-      };
-      toast('Demo mode: backend not connected', 'error');
+    const fd = new FormData();
+    fd.append('audio', uploadedFile);
+    const res = await fetch(`${API_BASE}/verify`, {method:'POST', body:fd});
+    if(!res.ok){
+      const err = await res.json();
+      throw new Error(err.detail || 'HTTP '+res.status);
     }
-
+    const result = await res.json();
+    log(`Backend response: ${result.message}`, result.identified ? 'ok' : 'warn');
     showIdentificationResult(result);
+  } catch(e){
+    log(`Backend error: ${e.message}`, 'err');
+    toast(`Backend error: ${e.message}`, 'error');
   } finally {
     identifyBtn.disabled = false;
     authSpinner.classList.remove('active');
@@ -1357,6 +1419,8 @@ function showIdentificationResult(r){
   const chipSpk = document.getElementById('chip-spk');
   const chipConf= document.getElementById('chip-conf');
   const chipSta = document.getElementById('chip-status');
+  const topMatchesDiv = document.getElementById('top-matches');
+  const topMatchesList = document.getElementById('top-matches-list');
 
   panel.classList.add('visible');
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -1365,6 +1429,24 @@ function showIdentificationResult(r){
   const identified = r.identified;
   const sim = r.similarity;
   const pct = Math.round(sim*100);
+
+  // Display top matches if available
+  if(r.top_matches && r.top_matches.length > 0){
+    topMatchesDiv.style.display = 'block';
+    topMatchesList.innerHTML = '';
+    r.top_matches.forEach((match, idx) => {
+      const matchDiv = document.createElement('div');
+      matchDiv.className = 'match-item' + (idx === 0 && identified ? ' best' : '');
+      matchDiv.innerHTML = `
+        <div class="match-rank">#${idx + 1}</div>
+        <div class="match-name">${match.speaker}</div>
+        <div class="match-score">${match.similarity.toFixed(4)} (${match.confidence.toFixed(0)}%)</div>
+      `;
+      topMatchesList.appendChild(matchDiv);
+    });
+  } else {
+    topMatchesDiv.style.display = 'none';
+  }
 
   if(identified){
     // Speaker identified
@@ -1557,9 +1639,9 @@ document.addEventListener('keydown', e=>{
   INIT LOG
 ═══════════════════════════════════════════════════════════════*/
 log('VoxGuard initialized','ok');
-log('CNN model: 3×ConvBlock + GAP + FC-256','info');
+log('CNN model: 5×ConvBlock + BatchNorm + Dropout + FC-512','info');
 log('Mode: Speaker Identification','info');
-log('Threshold: 0.65  |  Embedding: 256-d','info');
+log('Threshold: 0.60 (adaptive)  |  Embedding: 512-d','info');
 </script>
 </body>
 </html>
