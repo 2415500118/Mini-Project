@@ -154,9 +154,12 @@ async def get_firebase_config():
     return JSONResponse(content=FIREBASE_CONFIG)
 
 @app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    from fastapi.responses import Response
-    return Response(status_code=204)
+async def favicon_ico():
+    return FileResponse("favicon.svg", media_type="image/svg+xml")
+
+@app.get("/favicon.svg", include_in_schema=False)
+async def favicon_svg():
+    return FileResponse("favicon.svg", media_type="image/svg+xml")
 
 @app.get("/status")
 async def status():
