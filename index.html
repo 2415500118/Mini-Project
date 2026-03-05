@@ -6,7 +6,6 @@
 <title>VoxGuard — AI Speaker Verification</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:ital,wght@0,200;0,400;0,600;1,300&display=swap" rel="stylesheet"/>
 <style>
-  RESET & TOKENS
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:       #030a12;
@@ -40,7 +39,6 @@ body{
   cursor:none;
 }
 
-  CUSTOM CURSOR
 #cursor{
   position:fixed;width:16px;height:16px;
   border:2px solid var(--c);border-radius:50%;
@@ -56,13 +54,11 @@ body{
   transform:translate(-50%,-50%);
 }
 
-  CANVAS — PARTICLE FIELD
 #bg-canvas{
   position:fixed;inset:0;
   z-index:0;pointer-events:none;
 }
 
-  SCAN-LINE OVERLAY
 body::after{
   content:'';
   position:fixed;inset:0;
@@ -78,7 +74,6 @@ body::after{
 }
 @keyframes scanmove{0%{background-position:0 0}100%{background-position:0 80px}}
 
-  CORNER BRACKETS (reusable)
 .framed{position:relative}
 .framed::before,.framed::after,
 .framed .fr-b::before,.framed .fr-b::after{
@@ -94,14 +89,12 @@ body::after{
 .framed:hover::before,.framed:hover::after,
 .framed:hover .fr-b::before,.framed:hover .fr-b::after{opacity:1}
 
-  LAYOUT
 .app{
   position:relative;z-index:10;
   max-width:1080px;margin:0 auto;
   padding:40px 24px 80px;
 }
 
-  HEADER
 header{
   text-align:center;
   margin-bottom:60px;
@@ -201,7 +194,6 @@ header{
   50%{opacity:.3}
 }
 
-  GRID
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -209,7 +201,6 @@ header{
 }
 @media(max-width:720px){.grid{grid-template-columns:1fr}}
 
-  PANELS
 .panel{
   background:var(--card);
   border:1px solid var(--border);
@@ -245,7 +236,6 @@ header{
   box-shadow:0 0 8px var(--c);
 }
 
-  FORM ELEMENTS
 .field{margin-bottom:20px}
 label{
   display:block;
@@ -301,7 +291,6 @@ select option{background:var(--card)}
 .drop-text{font-family:var(--font-mono);font-size:.82rem;color:var(--dim)}
 .drop-text strong{color:var(--c)}
 
-  BUTTONS
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:10px;
   font-family:var(--font-hd);font-size:.72rem;font-weight:700;
@@ -341,7 +330,6 @@ select option{background:var(--card)}
   to{box-shadow:0 4px 48px #ff2d6eaa}
 }
 
-  WAVEFORM CANVAS
 .waveform-wrap{
   height:90px;
   background:var(--surface);
@@ -366,7 +354,6 @@ select option{background:var(--card)}
 }
 .rec-indicator.active{display:block}
 
-  SPECTROGRAM PREVIEW
 .spec-wrap{
   height:110px;
   background:var(--surface);
@@ -376,7 +363,6 @@ select option{background:var(--card)}
 }
 .spec-wrap canvas{width:100%;height:100%;display:block}
 
-  RESULT DISPLAY
 #result-panel{
   grid-column:1/-1;
   display:none;
@@ -584,7 +570,6 @@ select option{background:var(--card)}
   transition:stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1),stroke .4s;
 }
 
-  ENROLLED SPEAKER LIST
 .speaker-list{
   display:flex;flex-direction:column;gap:10px;
   max-height:260px;overflow-y:auto;
@@ -620,7 +605,6 @@ select option{background:var(--card)}
   background:var(--g);box-shadow:0 0 6px var(--g);
 }
 
-  ACTIVITY LOG
 .log-wrap{
   background:var(--surface);
   border:1px solid var(--border);
@@ -643,7 +627,6 @@ select option{background:var(--card)}
 .log-msg.info{color:var(--c)}
 .log-msg.warn{color:var(--a)}
 
-  LOADING SPINNER
 .spinner{
   width:40px;height:40px;margin:20px auto;
   border:3px solid var(--border);
@@ -655,7 +638,6 @@ select option{background:var(--card)}
 .spinner.active{display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-  THRESHOLD SLIDER
 .slider-wrap{margin-bottom:20px}
 input[type=range]{
   -webkit-appearance:none;width:100%;height:4px;
@@ -675,7 +657,6 @@ input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 16px var(--c)}
   color:var(--c);text-align:right;margin-top:6px;
 }
 
-  FOOTER
 footer{
   text-align:center;margin-top:60px;
   font-family:var(--font-mono);font-size:.72rem;
@@ -683,7 +664,6 @@ footer{
   opacity:.6;
 }
 
-  TOAST
 .toast-wrap{
   position:fixed;top:24px;right:24px;z-index:9998;
   display:flex;flex-direction:column;gap:10px;
@@ -713,7 +693,6 @@ footer{
 }
 .particles-overlay.active{display:block}
 
-  MODAL - ENROLLMENT
 .modal-overlay{
   position:fixed;inset:0;z-index:9500;
   background:rgba(0,0,0,.8);
@@ -792,7 +771,6 @@ footer{
   transform:translateY(-2px);
 }
 
-  LOGIN OVERLAY
 #login-overlay{
   position:fixed;inset:0;z-index:10000;
   background:var(--bg);
@@ -1332,7 +1310,6 @@ document.querySelectorAll('button,a,input,select,.drop-zone').forEach(el=>{
   draw();
 })();
 
-  WAVEFORM CANVAS (idle / recording)
 const wCanvas = document.getElementById('waveform-canvas');
 const wCtx    = wCanvas.getContext('2d');
 let waveData  = new Float32Array(200).fill(0);
@@ -1379,7 +1356,6 @@ function drawWave(){
 }
 drawWave();
 
-  SPECTROGRAM CANVAS (animated faux spectrogram)
 const sCanvas = document.getElementById('spec-canvas');
 const sCtx    = sCanvas.getContext('2d', { willReadFrequently: true });
 let   specCols = [];
@@ -1470,7 +1446,6 @@ async function loadSpeakers(){
   });
 }
 
-  FILE UPLOAD / DRAG & DROP
 let uploadedFile = null;
 const dropZone   = document.getElementById('drop-zone');
 const fileInput  = document.getElementById('file-input');
@@ -1494,7 +1469,6 @@ dropZone.addEventListener('drop', e=>{
   handleFile(e.dataTransfer.files[0]);
 });
 
-  LIVE RECORDING
 const recordBtn  = document.getElementById('record-btn');
 const recIndic   = document.getElementById('rec-indicator');
 let   mediaRecorder, recordedChunks=[], recordingTimer;
@@ -1560,13 +1534,9 @@ recordBtn.addEventListener('click', async ()=>{
   }
 });
 
-  THRESHOLD SLIDER (removed - no longer used in identification mode)
-
-  IDENTIFICATION & ENROLLMENT STATE
 let currentAudioFile = null;
 let lastIdentificationResult = null;
 
-  SPEAKER IDENTIFICATION
 const identifyBtn  = document.getElementById('identify-btn');
 const authSpinner  = document.getElementById('auth-spinner');
 const resultPanel  = document.getElementById('result-panel');
@@ -1606,7 +1576,6 @@ identifyBtn.addEventListener('click', async ()=>{
   }
 });
 
-  SHOW IDENTIFICATION RESULT
 function showIdentificationResult(r){
   const panel   = document.getElementById('result-panel');
   const status  = document.getElementById('result-status');
@@ -1720,7 +1689,6 @@ function showIdentificationResult(r){
   }
 }
 
-  SUCCESS PARTICLE BURST
 function launchParticles(){
   const canvas = document.getElementById('particles-overlay');
   canvas.classList.add('active');
@@ -1760,7 +1728,6 @@ function launchParticles(){
   requestAnimationFrame(frame);
 }
 
-  ENROLLMENT MODAL
 const enrollModal = document.getElementById('enrollment-modal');
 const enrollNameInput = document.getElementById('enroll-name-input');
 const enrollCancelBtn = document.getElementById('enroll-cancel-btn');
