@@ -6,20 +6,18 @@
 <title>VoxGuard — AI Speaker Verification</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:ital,wght@0,200;0,400;0,600;1,300&display=swap" rel="stylesheet"/>
 <style>
-/*═══════════════════════════════════════════════════════════════
   RESET & TOKENS
-═══════════════════════════════════════════════════════════════*/
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:       #030a12;
   --surface:  #060f1c;
   --card:     #08152a;
   --border:   #0d2a4a;
-  --c:        #00e5ff;   /* cyan  */
-  --g:        #00ff9d;   /* green */
-  --v:        #a855f7;   /* violet*/
-  --r:        #ff2d6e;   /* red   */
-  --a:        #fbbf24;   /* amber */
+  --c:        #00e5ff;   
+  --g:        #00ff9d;   
+  --v:        #a855f7;   
+  --r:        #ff2d6e;   
+  --a:        #fbbf24;   
   --text:     #b8d8f0;
   --dim:      #2a4a6a;
   --glow-c:   0 0 12px #00e5ffaa, 0 0 40px #00e5ff44;
@@ -42,9 +40,7 @@ body{
   cursor:none;
 }
 
-/*═══════════════════════════════════════════════════════════════
   CUSTOM CURSOR
-═══════════════════════════════════════════════════════════════*/
 #cursor{
   position:fixed;width:16px;height:16px;
   border:2px solid var(--c);border-radius:50%;
@@ -60,17 +56,13 @@ body{
   transform:translate(-50%,-50%);
 }
 
-/*═══════════════════════════════════════════════════════════════
   CANVAS — PARTICLE FIELD
-═══════════════════════════════════════════════════════════════*/
 #bg-canvas{
   position:fixed;inset:0;
   z-index:0;pointer-events:none;
 }
 
-/*═══════════════════════════════════════════════════════════════
   SCAN-LINE OVERLAY
-═══════════════════════════════════════════════════════════════*/
 body::after{
   content:'';
   position:fixed;inset:0;
@@ -86,9 +78,7 @@ body::after{
 }
 @keyframes scanmove{0%{background-position:0 0}100%{background-position:0 80px}}
 
-/*═══════════════════════════════════════════════════════════════
   CORNER BRACKETS (reusable)
-═══════════════════════════════════════════════════════════════*/
 .framed{position:relative}
 .framed::before,.framed::after,
 .framed .fr-b::before,.framed .fr-b::after{
@@ -104,18 +94,14 @@ body::after{
 .framed:hover::before,.framed:hover::after,
 .framed:hover .fr-b::before,.framed:hover .fr-b::after{opacity:1}
 
-/*═══════════════════════════════════════════════════════════════
   LAYOUT
-═══════════════════════════════════════════════════════════════*/
 .app{
   position:relative;z-index:10;
   max-width:1080px;margin:0 auto;
   padding:40px 24px 80px;
 }
 
-/*═══════════════════════════════════════════════════════════════
   HEADER
-═══════════════════════════════════════════════════════════════*/
 header{
   text-align:center;
   margin-bottom:60px;
@@ -131,7 +117,6 @@ header{
   margin-bottom:28px;position:relative;
 }
 
-/* Rotating rings */
 .ring{
   position:absolute;border-radius:50%;border-style:solid;
 }
@@ -194,7 +179,6 @@ header{
   95%{opacity:.2}
 }
 
-/* HUD top bar */
 .hud-bar{
   display:flex;justify-content:center;gap:32px;
   margin-top:20px;flex-wrap:wrap;
@@ -217,9 +201,7 @@ header{
   50%{opacity:.3}
 }
 
-/*═══════════════════════════════════════════════════════════════
   GRID
-═══════════════════════════════════════════════════════════════*/
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -227,9 +209,7 @@ header{
 }
 @media(max-width:720px){.grid{grid-template-columns:1fr}}
 
-/*═══════════════════════════════════════════════════════════════
   PANELS
-═══════════════════════════════════════════════════════════════*/
 .panel{
   background:var(--card);
   border:1px solid var(--border);
@@ -265,9 +245,7 @@ header{
   box-shadow:0 0 8px var(--c);
 }
 
-/*═══════════════════════════════════════════════════════════════
   FORM ELEMENTS
-═══════════════════════════════════════════════════════════════*/
 .field{margin-bottom:20px}
 label{
   display:block;
@@ -293,7 +271,6 @@ input[type=text]:focus,select:focus{
 select{cursor:pointer}
 select option{background:var(--card)}
 
-/* File drop zone */
 .drop-zone{
   border:2px dashed var(--border);
   border-radius:4px;
@@ -324,9 +301,7 @@ select option{background:var(--card)}
 .drop-text{font-family:var(--font-mono);font-size:.82rem;color:var(--dim)}
 .drop-text strong{color:var(--c)}
 
-/*═══════════════════════════════════════════════════════════════
   BUTTONS
-═══════════════════════════════════════════════════════════════*/
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:10px;
   font-family:var(--font-hd);font-size:.72rem;font-weight:700;
@@ -366,9 +341,7 @@ select option{background:var(--card)}
   to{box-shadow:0 4px 48px #ff2d6eaa}
 }
 
-/*═══════════════════════════════════════════════════════════════
   WAVEFORM CANVAS
-═══════════════════════════════════════════════════════════════*/
 .waveform-wrap{
   height:90px;
   background:var(--surface);
@@ -393,9 +366,7 @@ select option{background:var(--card)}
 }
 .rec-indicator.active{display:block}
 
-/*═══════════════════════════════════════════════════════════════
   SPECTROGRAM PREVIEW
-═══════════════════════════════════════════════════════════════*/
 .spec-wrap{
   height:110px;
   background:var(--surface);
@@ -405,9 +376,7 @@ select option{background:var(--card)}
 }
 .spec-wrap canvas{width:100%;height:100%;display:block}
 
-/*═══════════════════════════════════════════════════════════════
   RESULT DISPLAY
-═══════════════════════════════════════════════════════════════*/
 #result-panel{
   grid-column:1/-1;
   display:none;
@@ -496,7 +465,6 @@ select option{background:var(--card)}
   letter-spacing:.08em;
 }
 
-/* Similarity meter */
 .sim-meter{
   max-width:400px;margin:24px auto;
   position:relative;z-index:2;
@@ -545,7 +513,6 @@ select option{background:var(--card)}
   color:var(--c);font-weight:600;
 }
 
-/* Top Matches Section */
 .top-matches{
   margin-top:24px;
   background:var(--card);
@@ -605,7 +572,6 @@ select option{background:var(--card)}
   background:rgba(0,255,157,.06);
 }
 
-/* Holographic ring for result */
 .holo-ring{
   width:160px;height:160px;
   margin:0 auto 24px;
@@ -618,9 +584,7 @@ select option{background:var(--card)}
   transition:stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1),stroke .4s;
 }
 
-/*═══════════════════════════════════════════════════════════════
   ENROLLED SPEAKER LIST
-═══════════════════════════════════════════════════════════════*/
 .speaker-list{
   display:flex;flex-direction:column;gap:10px;
   max-height:260px;overflow-y:auto;
@@ -656,9 +620,7 @@ select option{background:var(--card)}
   background:var(--g);box-shadow:0 0 6px var(--g);
 }
 
-/*═══════════════════════════════════════════════════════════════
   ACTIVITY LOG
-═══════════════════════════════════════════════════════════════*/
 .log-wrap{
   background:var(--surface);
   border:1px solid var(--border);
@@ -681,9 +643,7 @@ select option{background:var(--card)}
 .log-msg.info{color:var(--c)}
 .log-msg.warn{color:var(--a)}
 
-/*═══════════════════════════════════════════════════════════════
   LOADING SPINNER
-═══════════════════════════════════════════════════════════════*/
 .spinner{
   width:40px;height:40px;margin:20px auto;
   border:3px solid var(--border);
@@ -695,9 +655,7 @@ select option{background:var(--card)}
 .spinner.active{display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/*═══════════════════════════════════════════════════════════════
   THRESHOLD SLIDER
-═══════════════════════════════════════════════════════════════*/
 .slider-wrap{margin-bottom:20px}
 input[type=range]{
   -webkit-appearance:none;width:100%;height:4px;
@@ -717,9 +675,7 @@ input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 16px var(--c)}
   color:var(--c);text-align:right;margin-top:6px;
 }
 
-/*═══════════════════════════════════════════════════════════════
   FOOTER
-═══════════════════════════════════════════════════════════════*/
 footer{
   text-align:center;margin-top:60px;
   font-family:var(--font-mono);font-size:.72rem;
@@ -727,9 +683,7 @@ footer{
   opacity:.6;
 }
 
-/*═══════════════════════════════════════════════════════════════
   TOAST
-═══════════════════════════════════════════════════════════════*/
 .toast-wrap{
   position:fixed;top:24px;right:24px;z-index:9998;
   display:flex;flex-direction:column;gap:10px;
@@ -754,15 +708,12 @@ footer{
   to{opacity:0;transform:translateX(40px)}
 }
 
-/* PARTICLE glow overlay on auth */
 .particles-overlay{
   position:fixed;inset:0;pointer-events:none;z-index:9000;display:none;
 }
 .particles-overlay.active{display:block}
 
-/*═══════════════════════════════════════════════════════════════
   MODAL - ENROLLMENT
-═══════════════════════════════════════════════════════════════*/
 .modal-overlay{
   position:fixed;inset:0;z-index:9500;
   background:rgba(0,0,0,.8);
@@ -841,9 +792,7 @@ footer{
   transform:translateY(-2px);
 }
 
-/*═══════════════════════════════════════════════════════════════
   LOGIN OVERLAY
-═══════════════════════════════════════════════════════════════*/
 #login-overlay{
   position:fixed;inset:0;z-index:10000;
   background:var(--bg);
@@ -893,7 +842,6 @@ footer{
   background-clip:text;
 }
 
-/* Tabs */
 .login-tabs{
   display:grid;grid-template-columns:1fr 1fr;
   border:1px solid var(--border);
@@ -916,7 +864,6 @@ footer{
 }
 .login-tab:hover:not(.active){color:var(--text);background:var(--border)}
 
-/* Fields */
 .login-field{margin-bottom:18px}
 .login-field label{
   display:block;
@@ -1036,31 +983,24 @@ footer{
 </head>
 <body>
 
-<!-- Custom cursor -->
 <div id="cursor"></div>
 <div id="cursor-dot"></div>
 
-<!-- Background particle canvas -->
 <canvas id="bg-canvas"></canvas>
 
-<!-- Auth particle overlay -->
 <canvas id="particles-overlay" class="particles-overlay"></canvas>
 
-<!-- Toast container -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<!-- ══ USER BAR (shown when logged in) ═══════════════════════ -->
 <div class="login-user-bar" id="user-bar">
   <span class="login-user-name" id="user-name"></span>
   <button class="btn-signout" id="signout-btn">SIGN OUT</button>
 </div>
 
-<!-- ══ LOGIN OVERLAY ══════════════════════════════════════════ -->
 <div id="login-overlay">
   <div class="login-box">
     <div class="lb-b"></div>
 
-    <!-- Logo -->
     <div class="login-logo">
       <div class="login-logo-icon">
         <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1072,16 +1012,13 @@ footer{
       <span class="login-title">VOXGUARD</span>
     </div>
 
-    <!-- Tabs -->
     <div class="login-tabs">
       <button class="login-tab active" id="tab-signin" onclick="switchTab('signin')">SIGN IN</button>
       <button class="login-tab" id="tab-signup" onclick="switchTab('signup')">SIGN UP</button>
     </div>
 
-    <!-- Error -->
     <div class="login-error" id="login-error"></div>
 
-    <!-- Sign-in form -->
     <form id="form-signin" onsubmit="handleSignIn(event)">
       <div class="login-field">
         <label>EMAIL</label>
@@ -1095,7 +1032,6 @@ footer{
       <button type="submit" class="btn-login btn-login-primary" id="si-btn">AUTHENTICATE</button>
     </form>
 
-    <!-- Sign-up form (hidden by default) -->
     <form id="form-signup" style="display:none" onsubmit="handleSignUp(event)">
       <div class="login-field">
         <label>DISPLAY NAME</label>
@@ -1112,10 +1048,8 @@ footer{
       <button type="submit" class="btn-login btn-login-primary" id="su-btn">CREATE ACCOUNT</button>
     </form>
 
-    <!-- Divider -->
     <div class="login-divider"><span>OR CONTINUE WITH</span></div>
 
-    <!-- Google -->
     <button class="btn-login btn-google" id="google-btn" onclick="handleGoogle()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -1130,7 +1064,6 @@ footer{
 </div>
 
 <div class="app" id="main-app" style="display:none">
-  <!-- ══ HEADER ═════════════════════════════════════════════════ -->
   <header>
     <div class="logo-wrap">
       <div class="ring ring-3"></div>
@@ -1153,27 +1086,22 @@ footer{
     </div>
   </header>
 
-  <!-- ══ MAIN GRID ══════════════════════════════════════════════ -->
   <div class="grid">
 
-    <!-- ── AUTHENTICATION PANEL ──────────────────────────────── -->
     <div class="panel framed" style="grid-column:1/2;grid-row:1/3">
       <div class="fr-b"></div>
       <div class="panel-label">Voice Authentication</div>
 
-      <!-- Waveform -->
       <div class="waveform-wrap">
         <canvas id="waveform-canvas"></canvas>
         <span class="waveform-label">SIGNAL MONITOR</span>
         <span class="rec-indicator" id="rec-indicator"></span>
       </div>
 
-      <!-- Spectrogram preview -->
       <div class="spec-wrap">
         <canvas id="spec-canvas"></canvas>
       </div>
 
-      <!-- File upload -->
       <div class="field">
         <label>UPLOAD AUDIO FILE</label>
         <div class="drop-zone" id="drop-zone">
@@ -1183,7 +1111,6 @@ footer{
         </div>
       </div>
 
-      <!-- Live record -->
       <div class="field">
         <label>OR RECORD LIVE</label>
         <button class="btn btn-record" id="record-btn">
@@ -1199,7 +1126,6 @@ footer{
       <div class="spinner" id="auth-spinner"></div>
     </div>
 
-    <!-- ── ENROLLED SPEAKERS ──────────────────────────────────── -->
     <div class="panel framed">
       <div class="fr-b"></div>
       <div class="panel-label">Enrolled Speakers</div>
@@ -1210,19 +1136,16 @@ footer{
       </div>
     </div>
 
-    <!-- ── ACTIVITY LOG ──────────────────────────────────────── -->
     <div class="panel framed">
       <div class="fr-b"></div>
       <div class="panel-label">System Log</div>
       <div class="log-wrap" id="log-wrap"></div>
     </div>
 
-    <!-- ── RESULT PANEL ──────────────────────────────────────── -->
     <div class="panel panel-full framed" id="result-panel">
       <div class="fr-b"></div>
       <div class="panel-label">Identification Result</div>
       <div class="result-card">
-        <!-- Holographic ring -->
         <div class="holo-ring">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="44" fill="none" stroke="#0d2a4a" stroke-width="8"/>
@@ -1238,7 +1161,6 @@ footer{
 
         <div class="result-status" id="result-status">AWAITING INPUT</div>
 
-        <!-- Similarity bar -->
         <div class="sim-meter">
           <div class="sim-track">
             <div class="sim-fill" id="sim-fill"></div>
@@ -1246,7 +1168,6 @@ footer{
           <div class="sim-labels"><span>0.0</span><span id="threshold-marker">▲ 0.60</span><span>1.0</span></div>
         </div>
 
-        <!-- Detail chips -->
         <div class="result-details">
           <div class="detail-chip">
             <div class="chip-label">SPEAKER IDENTIFIED</div>
@@ -1266,13 +1187,11 @@ footer{
           </div>
         </div>
 
-        <!-- Top Matches -->
         <div class="top-matches" id="top-matches" style="display:none">
           <div class="top-matches-title">Top Matches</div>
           <div id="top-matches-list"></div>
         </div>
 
-        <!-- Wikipedia Redirect -->
         <div class="wiki-redirect-wrap" id="wiki-redirect-wrap">
           <a id="wiki-btn" class="wiki-btn" href="#" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1287,7 +1206,6 @@ footer{
       </div>
     </div>
 
-    <!-- ── ENROLLMENT MODAL ──────────────────────────────────── -->
     <div id="enrollment-modal" class="modal-overlay hidden">
       <div class="modal-box framed">
         <div class="fr-b"></div>
@@ -1326,16 +1244,10 @@ footer{
 </div><!-- /app -->
 
 <script>
-/*═══════════════════════════════════════════════════════════════
-  CONFIG  (adjust to match your FastAPI backend)
-═══════════════════════════════════════════════════════════════*/
 const API_BASE = window.location.origin === 'null' || window.location.protocol === 'file:'
   ? 'http://localhost:8081'
   : '';
 
-/*═══════════════════════════════════════════════════════════════
-  CUSTOM CURSOR
-═══════════════════════════════════════════════════════════════*/
 const cursor    = document.getElementById('cursor');
 const cursorDot = document.getElementById('cursor-dot');
 let   mouseX=0, mouseY=0, cX=0, cY=0;
@@ -1364,9 +1276,6 @@ document.querySelectorAll('button,a,input,select,.drop-zone').forEach(el=>{
   requestAnimationFrame(moveCursor);
 })();
 
-/*═══════════════════════════════════════════════════════════════
-  BACKGROUND PARTICLE FIELD
-═══════════════════════════════════════════════════════════════*/
 (function bgCanvas(){
   const canvas = document.getElementById('bg-canvas');
   const ctx = canvas.getContext('2d');
@@ -1392,7 +1301,6 @@ document.querySelectorAll('button,a,input,select,.drop-zone').forEach(el=>{
 
   function draw(){
     ctx.clearRect(0,0,W,H);
-    // connections
     for(let i=0;i<particles.length;i++){
       for(let j=i+1;j<particles.length;j++){
         const dx=particles[i].x-particles[j].x;
@@ -1408,7 +1316,6 @@ document.querySelectorAll('button,a,input,select,.drop-zone').forEach(el=>{
         }
       }
     }
-    // dots
     particles.forEach(p=>{
       p.x+=p.vx; p.y+=p.vy;
       if(p.x<0)p.x=W; if(p.x>W)p.x=0;
@@ -1425,9 +1332,7 @@ document.querySelectorAll('button,a,input,select,.drop-zone').forEach(el=>{
   draw();
 })();
 
-/*═══════════════════════════════════════════════════════════════
   WAVEFORM CANVAS (idle / recording)
-═══════════════════════════════════════════════════════════════*/
 const wCanvas = document.getElementById('waveform-canvas');
 const wCtx    = wCanvas.getContext('2d');
 let waveData  = new Float32Array(200).fill(0);
@@ -1452,14 +1357,12 @@ function drawWave(){
     waveData = new Float32Array(buf.length);
     for(let i=0;i<buf.length;i++) waveData[i]=(buf[i]-128)/128;
   } else {
-    // idle — gentle sine
     const t = Date.now()/1200;
     for(let i=0;i<waveData.length;i++){
       waveData[i] = Math.sin(i*.06+t)*.06 + Math.sin(i*.03+t*.7)*.04;
     }
   }
 
-  // glow line
   wCtx.shadowBlur = 10;
   wCtx.shadowColor = recording ? '#ff2d6e' : '#00e5ff';
   wCtx.strokeStyle  = recording ? '#ff2d6e' : '#00e5ff';
@@ -1476,9 +1379,7 @@ function drawWave(){
 }
 drawWave();
 
-/*═══════════════════════════════════════════════════════════════
   SPECTROGRAM CANVAS (animated faux spectrogram)
-═══════════════════════════════════════════════════════════════*/
 const sCanvas = document.getElementById('spec-canvas');
 const sCtx    = sCanvas.getContext('2d', { willReadFrequently: true });
 let   specCols = [];
@@ -1491,12 +1392,9 @@ new ResizeObserver(resizeSpec).observe(sCanvas);
 resizeSpec();
 
 function drawSpec(){
-  // Use internal canvas pixel dimensions (set by resizeSpec via devicePixelRatio)
   const W = sCanvas.width, H = sCanvas.height;
-  // Guard: skip if canvas has no size (e.g. hidden behind login overlay)
   if(W < 2 || H < 1){ requestAnimationFrame(drawSpec); return; }
 
-  // Shift left by 1 px
   const img = sCtx.getImageData(1, 0, W - 1, H);
   sCtx.putImageData(img, 0, 0);
   sCtx.clearRect(W - 1, 0, 1, H);
@@ -1516,9 +1414,6 @@ function drawSpec(){
 }
 drawSpec();
 
-/*═══════════════════════════════════════════════════════════════
-  TOAST
-═══════════════════════════════════════════════════════════════*/
 function toast(msg, type='info'){
   const el = document.createElement('div');
   el.className = `toast ${type==='error'?'error':''}`;
@@ -1530,9 +1425,6 @@ function toast(msg, type='info'){
   }, 3500);
 }
 
-/*═══════════════════════════════════════════════════════════════
-  ACTIVITY LOG
-═══════════════════════════════════════════════════════════════*/
 function log(msg, level='info'){
   const wrap = document.getElementById('log-wrap');
   const ts   = new Date().toLocaleTimeString('en-GB',{hour12:false});
@@ -1543,9 +1435,6 @@ function log(msg, level='info'){
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-/*═══════════════════════════════════════════════════════════════
-  LOAD ENROLLED SPEAKERS  (from backend or demo list)
-═══════════════════════════════════════════════════════════════*/
 const COLORS = ['#00e5ff','#00ff9d','#a855f7','#fbbf24','#ff2d6e','#34d399'];
 
 async function loadSpeakers(){
@@ -1557,7 +1446,6 @@ async function loadSpeakers(){
     speakers = data.speakers || [];
     log(`Loaded ${speakers.length} enrolled speakers`, 'ok');
   } catch(e){
-    // Demo mode when backend offline
     speakers = ['Aamir_Khan','Ajay_Devgn','Akshay_Kumar',
                 'Amitabh_Bachchan','Freida_Pinto','Irrfan_Khan'];
     log('Backend offline — running in demo mode', 'warn');
@@ -1568,7 +1456,6 @@ async function loadSpeakers(){
   list.innerHTML = '';
 
   speakers.forEach((spk,i)=>{
-    // list item
     const item = document.createElement('div');
     item.className = 'speaker-item';
     item.style.animationDelay = (i*.07)+'s';
@@ -1582,11 +1469,8 @@ async function loadSpeakers(){
     list.appendChild(item);
   });
 }
-// loadSpeakers() is called from the Firebase auth handler after login (see module script below)
 
-/*═══════════════════════════════════════════════════════════════
   FILE UPLOAD / DRAG & DROP
-═══════════════════════════════════════════════════════════════*/
 let uploadedFile = null;
 const dropZone   = document.getElementById('drop-zone');
 const fileInput  = document.getElementById('file-input');
@@ -1610,9 +1494,7 @@ dropZone.addEventListener('drop', e=>{
   handleFile(e.dataTransfer.files[0]);
 });
 
-/*═══════════════════════════════════════════════════════════════
   LIVE RECORDING
-═══════════════════════════════════════════════════════════════*/
 const recordBtn  = document.getElementById('record-btn');
 const recIndic   = document.getElementById('rec-indicator');
 let   mediaRecorder, recordedChunks=[], recordingTimer;
@@ -1660,7 +1542,6 @@ recordBtn.addEventListener('click', async ()=>{
       recordBtn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> STOP RECORDING`;
       recIndic.classList.add('active');
       log('Recording started…','warn');
-      // Auto-stop after 5s
       recordingTimer = setTimeout(()=> recordBtn.click(), 5000);
     } catch(e){
       toast('Microphone access denied','error');
@@ -1679,21 +1560,13 @@ recordBtn.addEventListener('click', async ()=>{
   }
 });
 
-/*═══════════════════════════════════════════════════════════════
   THRESHOLD SLIDER (removed - no longer used in identification mode)
-═══════════════════════════════════════════════════════════════*/
 
-
-/*═══════════════════════════════════════════════════════════════
   IDENTIFICATION & ENROLLMENT STATE
-═══════════════════════════════════════════════════════════════*/
 let currentAudioFile = null;
 let lastIdentificationResult = null;
 
-
-/*═══════════════════════════════════════════════════════════════
   SPEAKER IDENTIFICATION
-═══════════════════════════════════════════════════════════════*/
 const identifyBtn  = document.getElementById('identify-btn');
 const authSpinner  = document.getElementById('auth-spinner');
 const resultPanel  = document.getElementById('result-panel');
@@ -1709,7 +1582,6 @@ identifyBtn.addEventListener('click', async ()=>{
   currentAudioFile = uploadedFile;
   log('Identifying speaker…','info');
 
-  // Reset Wikipedia widget from previous run
   if(window._wikiTimer) clearInterval(window._wikiTimer);
   const _ww = document.getElementById('wiki-redirect-wrap');
   if(_ww){ _ww.classList.remove('visible'); }
@@ -1734,9 +1606,7 @@ identifyBtn.addEventListener('click', async ()=>{
   }
 });
 
-/*═══════════════════════════════════════════════════════════════
   SHOW IDENTIFICATION RESULT
-═══════════════════════════════════════════════════════════════*/
 function showIdentificationResult(r){
   const panel   = document.getElementById('result-panel');
   const status  = document.getElementById('result-status');
@@ -1758,7 +1628,6 @@ function showIdentificationResult(r){
   const sim = r.similarity;
   const pct = Math.round(sim*100);
 
-  // Display top matches if available
   if(r.top_matches && r.top_matches.length > 0){
     topMatchesDiv.style.display = 'block';
     topMatchesList.innerHTML = '';
@@ -1777,7 +1646,6 @@ function showIdentificationResult(r){
   }
 
   if(identified){
-    // Speaker identified
     status.textContent  = `IDENTIFIED: ${r.speaker}`;
     status.className    = 'result-status status-auth';
     
@@ -1802,7 +1670,6 @@ function showIdentificationResult(r){
     toast(`✅ Identified as ${r.speaker}`, '');
     launchParticles();
 
-    // Wikipedia redirect
     const wikiWrap   = document.getElementById('wiki-redirect-wrap');
     const wikiBtn    = document.getElementById('wiki-btn');
     const wikiCount  = document.getElementById('wiki-countdown');
@@ -1826,7 +1693,6 @@ function showIdentificationResult(r){
       }
     }, 1000);
   } else {
-    // No speaker identified
     status.textContent  = 'NO MATCH FOUND';
     status.className    = 'result-status status-deny';
     
@@ -1850,14 +1716,11 @@ function showIdentificationResult(r){
     log(`No match found (closest: ${r.closest_speaker||'unknown'}, sim=${sim.toFixed(4)})`, 'warn');
     toast('No matching speaker - Add to database', 'error');
     
-    // Show enrollment modal after a brief delay
     setTimeout(()=>showEnrollmentModal(r), 600);
   }
 }
 
-/*═══════════════════════════════════════════════════════════════
   SUCCESS PARTICLE BURST
-═══════════════════════════════════════════════════════════════*/
 function launchParticles(){
   const canvas = document.getElementById('particles-overlay');
   canvas.classList.add('active');
@@ -1897,22 +1760,18 @@ function launchParticles(){
   requestAnimationFrame(frame);
 }
 
-/*═══════════════════════════════════════════════════════════════
   ENROLLMENT MODAL
-═══════════════════════════════════════════════════════════════*/
 const enrollModal = document.getElementById('enrollment-modal');
 const enrollNameInput = document.getElementById('enroll-name-input');
 const enrollCancelBtn = document.getElementById('enroll-cancel-btn');
 const enrollSubmitBtn = document.getElementById('enroll-submit-btn');
 
 function showEnrollmentModal(identificationResult){
-  // Populate modal with current audio info
   document.getElementById('enroll-similarity').textContent = identificationResult.similarity.toFixed(4);
   document.getElementById('enroll-filename').textContent = currentAudioFile.name;
   enrollNameInput.value = '';
   enrollNameInput.focus();
   
-  // Show modal
   enrollModal.classList.remove('hidden');
   log('Enrollment modal opened','info');
 }
@@ -1932,7 +1791,6 @@ enrollSubmitBtn.addEventListener('click', async ()=>{
     return;
   }
   
-  // Validate name (alphanumeric, underscore, hyphen only)
   if(!/^[a-zA-Z0-9_-]+$/.test(speakerName)){
     toast('Speaker name can only contain letters, numbers, underscores, and hyphens','error');
     return;
@@ -1960,10 +1818,8 @@ enrollSubmitBtn.addEventListener('click', async ()=>{
     
     hideEnrollmentModal();
     
-    // Reload speakers list
     await loadSpeakers();
     
-    // Show success message
     setTimeout(()=>{
       const chipSpk = document.getElementById('chip-spk');
       chipSpk.textContent = speakerName;
@@ -1980,33 +1836,23 @@ enrollSubmitBtn.addEventListener('click', async ()=>{
   }
 });
 
-// Close modal on Escape key
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && !enrollModal.classList.contains('hidden')){
     hideEnrollmentModal();
   }
 });
-
-/*═══════════════════════════════════════════════════════════════
-  INIT LOG
-═══════════════════════════════════════════════════════════════*/
-// App initialisation is deferred until after Firebase login.
-// See the <script type="module"> block below.
 </script>
 
-<!-- ══ FIREBASE AUTH ══════════════════════════════════════════ -->
 <script type="module">
 import { signUp, signIn, signOut, signInWithGoogle, onUserStateChanged, resetPassword }
   from "/firebase/firebase-auth.js";
 
-/* ── DOM refs ── */
 const overlay    = document.getElementById('login-overlay');
 const mainApp    = document.getElementById('main-app');
 const userBar    = document.getElementById('user-bar');
 const userNameEl = document.getElementById('user-name');
 const loginErr   = document.getElementById('login-error');
 
-/* ── Helpers ── */
 function showError(msg){
   loginErr.textContent = msg;
   loginErr.classList.add('visible');
@@ -2018,12 +1864,10 @@ function setLoading(btn, loading){
   btn.textContent = loading ? 'PLEASE WAIT…' : btn.dataset.label;
 }
 
-/* Save original labels */
 document.querySelectorAll('.btn-login-primary').forEach(b=>{
   b.dataset.label = b.textContent;
 });
 
-/* ── Tab switch ── */
 window.switchTab = function(tab){
   clearError();
   const isSignin = tab === 'signin';
@@ -2033,7 +1877,6 @@ window.switchTab = function(tab){
   document.getElementById('tab-signup').classList.toggle('active', !isSignin);
 };
 
-/* ── Auth state listener ── */
 let appInitialized = false;
 
 await onUserStateChanged(user => {
@@ -2043,27 +1886,22 @@ await onUserStateChanged(user => {
     userBar.classList.add('visible');
     userNameEl.textContent = (user.displayName || user.email || 'Operator').toUpperCase();
 
-    // Boot the app exactly once after first successful login
     if(!appInitialized){
       appInitialized = true;
-      // Init log
       log('VoxGuard initialized','ok');
       log('CNN model: 5×ConvBlock + BatchNorm + Dropout + FC-512','info');
       log('Mode: Speaker Identification','info');
       log('Threshold: 0.60 (adaptive)  |  Embedding: 512-d','info');
-      // Load speakers from backend
       loadSpeakers();
     }
   } else {
     overlay.classList.remove('hidden');
     mainApp.style.display = 'none';
     userBar.classList.remove('visible');
-    // Reset init flag so data reloads on next login
     appInitialized = false;
   }
 });
 
-/* ── Sign In ── */
 window.handleSignIn = async function(e){
   e.preventDefault(); clearError();
   const btn   = document.getElementById('si-btn');
@@ -2079,7 +1917,6 @@ window.handleSignIn = async function(e){
   }
 };
 
-/* ── Sign Up ── */
 window.handleSignUp = async function(e){
   e.preventDefault(); clearError();
   const btn   = document.getElementById('su-btn');
@@ -2096,7 +1933,6 @@ window.handleSignUp = async function(e){
   }
 };
 
-/* ── Google ── */
 window.handleGoogle = async function(){
   clearError();
   const btn = document.getElementById('google-btn');
@@ -2112,7 +1948,6 @@ window.handleGoogle = async function(){
   }
 };
 
-/* ── Password Reset ── */
 window.handleReset = async function(e){
   e.preventDefault(); clearError();
   const email = document.getElementById('si-email').value.trim();
@@ -2128,12 +1963,10 @@ window.handleReset = async function(e){
   }
 };
 
-/* ── Sign Out ── */
 document.getElementById('signout-btn').addEventListener('click', async ()=>{
   await signOut();
 });
 
-/* ── Firebase error → human message ── */
 function friendlyError(code){
   const map = {
     'auth/invalid-email':            'Invalid email address.',
