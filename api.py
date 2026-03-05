@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import torch
 import pickle
 import numpy as np
@@ -10,6 +11,21 @@ import os
 import tempfile
 from pathlib import Path
 from resemblyzer import VoiceEncoder, preprocess_wav
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# ─── Firebase config (read from .env, exposed to the frontend via /firebase-config) ───
+FIREBASE_CONFIG = {
+    "apiKey":            os.getenv("FIREBASE_API_KEY"),
+    "authDomain":        os.getenv("FIREBASE_AUTH_DOMAIN"),
+    "projectId":         os.getenv("FIREBASE_PROJECT_ID"),
+    "storageBucket":     os.getenv("FIREBASE_STORAGE_BUCKET"),
+    "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+    "appId":             os.getenv("FIREBASE_APP_ID"),
+    "measurementId":     os.getenv("FIREBASE_MEASUREMENT_ID"),
+}
 
 N_MELS = 128
 FIXED_LENGTH = 128
@@ -115,6 +131,9 @@ async def lifespan(app):
 
 app = FastAPI(title="VoxGuard API", lifespan=lifespan)
 
+# Serve firebase JS helpers at /firebase/*
+app.mount("/firebase", StaticFiles(directory="firebase"), name="firebase")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -126,6 +145,20 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return FileResponse("index.html", media_type="text/html")
+
+@app.get("/firebase-config")
+async def get_firebase_config():
+    """Return Firebase client config from environment variables.
+    This endpoint is consumed by firebase/firebase-config.js so that
+    secrets never need to be hard-coded in the frontend.
+    """
+    missing = [k for k, v in FIREBASE_CONFIG.items() if not v]
+    if missing:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing Firebase env vars: {missing}"
+        )
+    return JSONResponse(content=FIREBASE_CONFIG)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -312,7 +345,7 @@ if __name__ == "__main__":
             print("Failed to install dependencies")
             sys.exit(1)
 
-    port = int(os.environ.get("PORT", 8081))
+    port = int(os.getenv("PORT", 8081))
     print(f"Starting server at http://localhost:{port}\n")
     try:
         uvicorn.run("api:app", host="0.0.0.0", port=port, reload=False, log_level="info")

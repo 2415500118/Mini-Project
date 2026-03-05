@@ -15,3 +15,5 @@ build/
 .ipynb_checkpoints/
 
 vox1_indian/
+# Environment secrets – never commit
+.env
