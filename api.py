@@ -13,10 +13,8 @@ from pathlib import Path
 from resemblyzer import VoiceEncoder, preprocess_wav
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# ─── Firebase config (read from .env, exposed to the frontend via /firebase-config) ───
 FIREBASE_CONFIG = {
     "apiKey":            os.getenv("FIREBASE_API_KEY"),
     "authDomain":        os.getenv("FIREBASE_AUTH_DOMAIN"),
@@ -131,7 +129,6 @@ async def lifespan(app):
 
 app = FastAPI(title="VoxGuard API", lifespan=lifespan)
 
-# Serve firebase JS helpers at /firebase/*
 app.mount("/firebase", StaticFiles(directory="firebase"), name="firebase")
 
 app.add_middleware(
@@ -148,10 +145,6 @@ async def root():
 
 @app.get("/firebase-config")
 async def get_firebase_config():
-    """Return Firebase client config from environment variables.
-    This endpoint is consumed by firebase/firebase-config.js so that
-    secrets never need to be hard-coded in the frontend.
-    """
     missing = [k for k, v in FIREBASE_CONFIG.items() if not v]
     if missing:
         raise HTTPException(
