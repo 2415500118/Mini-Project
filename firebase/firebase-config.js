@@ -7,11 +7,16 @@ async function initFirebase() {
   if (!response.ok) {
     throw new Error(`Failed to load Firebase config: ${response.status} ${response.statusText}`);
   }
-  const firebaseConfig = await response.json();
+  const config = await response.json();
+  if (!config.configured) {
+    console.warn("Firebase not configured. Auth features will be disabled.", config.missing);
+    return { app: null, auth: null, analytics: null, configured: false };
+  }
+  const { configured, ...firebaseConfig } = config;
   const app       = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const auth      = getAuth(app);
-  return { app, auth, analytics };
+  return { app, auth, analytics, configured: true };
 }
 
 export const firebaseReady = initFirebase();

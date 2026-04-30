@@ -447,11 +447,11 @@ async def admin_page():
 async def get_firebase_config():
     missing = [k for k, v in FIREBASE_CONFIG.items() if not v]
     if missing:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Missing Firebase env vars: {missing}"
+        return JSONResponse(
+            content={"configured": False, "missing": missing},
+            status_code=200
         )
-    return JSONResponse(content=FIREBASE_CONFIG)
+    return JSONResponse(content={"configured": True, **FIREBASE_CONFIG})
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon_ico():

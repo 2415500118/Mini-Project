@@ -11,7 +11,13 @@ import {
 
 import { firebaseReady } from "./firebase-config.js";
 
-const getAuth = async () => (await firebaseReady).auth;
+const getAuth = async () => {
+  const ready = await firebaseReady;
+  if (!ready.configured) {
+    throw new Error("Firebase not configured. Please set up Firebase environment variables.");
+  }
+  return ready.auth;
+};
 
 export async function signUp(email, password, displayName = "") {
   const auth = await getAuth();
@@ -45,11 +51,16 @@ export async function resetPassword(email) {
 }
 
 export async function onUserStateChanged(callback) {
-  const auth = await getAuth();
-  return onAuthStateChanged(auth, callback);
+  const ready = await firebaseReady;
+  if (!ready.configured) {
+    callback(null);
+    return () => {};
+  }
+  return onAuthStateChanged(ready.auth, callback);
 }
 
 export async function getCurrentUser() {
-  const auth = await getAuth();
-  return auth.currentUser;
+  const ready = await firebaseReady;
+  if (!ready.configured) return null;
+  return ready.auth.currentUser;
 }
