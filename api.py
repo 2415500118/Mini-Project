@@ -57,8 +57,48 @@ BOOTSTRAP_ADMIN_EMAILS = {"admin@voicebaseddl.com"}
 ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()} | BOOTSTRAP_ADMIN_EMAILS
 ADMIN_UIDS = {u.strip() for u in os.getenv("ADMIN_UIDS", "").split(",") if u.strip()}
 FEEDBACK_AUDIT_MAX = int(os.getenv("FEEDBACK_AUDIT_MAX", "2000"))
+FEEDBACK_AUDIT_FILE = os.getenv("FEEDBACK_AUDIT_FILE", "feedback_audit_log.jsonl")
 
-feedback_audit_log = []
+def _load_feedback_events_from_file(max_items: int):
+    path = Path(FEEDBACK_AUDIT_FILE)
+    if not path.exists() or not path.is_file():
+        return []
+
+    items = []
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                raw = line.strip()
+                if not raw:
+                    continue
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, dict):
+                        items.append(parsed)
+                except json.JSONDecodeError:
+                    continue
+    except Exception as exc:
+        logger.warning("Failed to load feedback audit file %s: %s", path, exc)
+        return []
+
+    if len(items) > max_items:
+        items = items[-max_items:]
+    return items
+
+def _persist_feedback_event_file(event: Dict[str, Any]) -> bool:
+    path = Path(FEEDBACK_AUDIT_FILE)
+    try:
+        if path.parent and not path.parent.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(event, ensure_ascii=True) + "\n")
+        return True
+    except Exception as exc:
+        logger.warning("Failed to persist feedback event to file %s: %s", path, exc)
+        return False
+
+feedback_audit_log = _load_feedback_events_from_file(FEEDBACK_AUDIT_MAX)
 
 N_MELS = 128
 FIXED_LENGTH = 128
@@ -229,6 +269,7 @@ def _append_feedback_event(event: Dict[str, Any]) -> None:
     feedback_audit_log.append(event)
     if len(feedback_audit_log) > FEEDBACK_AUDIT_MAX:
         del feedback_audit_log[:-FEEDBACK_AUDIT_MAX]
+    _persist_feedback_event_file(event)
 
 def _persist_feedback_event_firebase(event: Dict[str, Any]) -> bool:
     if not voice_db_state.get("firebase_db_ready") or firebase_db is None:
@@ -265,7 +306,8 @@ def _read_feedback_events(source_limit: int) -> Dict[str, Any]:
             logger.warning("Failed to read feedback events from Firebase DB: %s", exc)
 
     events = list(reversed(feedback_audit_log[-bounded:]))
-    return {"items": events, "storage": "memory"}
+    storage = "file" if Path(FEEDBACK_AUDIT_FILE).exists() else "memory"
+    return {"items": events, "storage": storage}
 
 def _filter_feedback_items(items, endpoint_filter: str, outcome_filter: str, email_filter: str, bounded_limit: int):
     rows = []
@@ -388,6 +430,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
     return response
 
 app.state.limiter = limiter
@@ -632,6 +675,26 @@ async def authenticate_speaker(
         })
     except Exception as e:
         logger.error(f"Auth processing error: {str(e)}")
+        event = {
+            "unix_ms": int(datetime.now(timezone.utc).timestamp() * 1000),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "endpoint": "authenticate",
+            "outcome": "error",
+            "user": {
+                "uid": user_context.get("uid"),
+                "email": user_context.get("email"),
+                "role": user_context.get("role", "user")
+            },
+            "claimed_speaker": speaker,
+            "feedback": {
+                "summary": f"Authentication processing failed: {str(e)}",
+                "reasons": ["The backend could not complete the voice comparison"],
+                "next_steps": ["Retry with a valid 3-5 second audio clip"],
+                "decision_factors": {}
+            }
+        }
+        _append_feedback_event(event)
+        _persist_feedback_event_firebase(event)
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
     finally:
         os.unlink(tmp_path)
@@ -760,6 +823,26 @@ async def verify_speaker(
                 "feedback": feedback
             })
     except Exception as e:
+        event = {
+            "unix_ms": int(datetime.now(timezone.utc).timestamp() * 1000),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "endpoint": "verify",
+            "outcome": "error",
+            "user": {
+                "uid": user_context.get("uid"),
+                "email": user_context.get("email"),
+                "role": user_context.get("role", "user")
+            },
+            "identified_speaker": None,
+            "feedback": {
+                "summary": f"Verification processing failed: {str(e)}",
+                "reasons": ["The backend could not process the submitted audio"],
+                "next_steps": ["Retry with a clearer recording"],
+                "decision_factors": {}
+            }
+        }
+        _append_feedback_event(event)
+        _persist_feedback_event_firebase(event)
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
     finally:
         os.unlink(tmp_path)

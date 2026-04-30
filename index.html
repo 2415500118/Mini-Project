@@ -560,6 +560,39 @@ select option{background:var(--card)}
   background:rgba(0,255,157,.06);
 }
 
+.decision-feedback{
+  margin-top:16px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:16px;
+  text-align:left;
+  position:relative;
+  z-index:2;
+}
+.decision-feedback-title{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.15em;
+  color:var(--dim);
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.decision-feedback-summary{
+  margin:0 0 10px;
+  font-family:var(--font-hd);
+  font-size:.92rem;
+  color:var(--text);
+}
+.decision-feedback-list{
+  margin:0;
+  padding-left:18px;
+  color:var(--text);
+  font-size:.82rem;
+}
+.decision-feedback-list li + li{margin-top:6px}
+
+
 .holo-ring{
   width:160px;height:160px;
   margin:0 auto 24px;
@@ -1334,6 +1367,21 @@ footer{color:#6f879f; letter-spacing:.08em}
           <div id="top-matches-list"></div>
         </div>
 
+        <div class="decision-feedback" id="decision-feedback" style="display:none">
+          <div class="decision-feedback-title">Decision Feedback</div>
+          <p class="decision-feedback-summary" id="decision-feedback-summary">-</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div class="decision-feedback-title" style="margin-bottom:6px">Reasons</div>
+              <ul class="decision-feedback-list" id="decision-feedback-reasons"></ul>
+            </div>
+            <div>
+              <div class="decision-feedback-title" style="margin-bottom:6px">Next Steps</div>
+              <ul class="decision-feedback-list" id="decision-feedback-next"></ul>
+            </div>
+          </div>
+        </div>
+
         <div class="wiki-redirect-wrap" id="wiki-redirect-wrap">
           <a id="wiki-btn" class="wiki-btn" href="#" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1854,6 +1902,33 @@ function showIdentificationResult(r){
   const topMatchesDiv = document.getElementById('top-matches');
   const topMatchesList = document.getElementById('top-matches-list');
 
+  function renderDecisionFeedback(feedback){
+    const wrap = document.getElementById('decision-feedback');
+    const summaryEl = document.getElementById('decision-feedback-summary');
+    const reasonsEl = document.getElementById('decision-feedback-reasons');
+    const nextEl = document.getElementById('decision-feedback-next');
+
+    if(!feedback){
+      wrap.style.display = 'none';
+      summaryEl.textContent = '-';
+      reasonsEl.innerHTML = '';
+      nextEl.innerHTML = '';
+      return;
+    }
+
+    const reasons = Array.isArray(feedback.reasons) ? feedback.reasons : [];
+    const nextSteps = Array.isArray(feedback.next_steps) ? feedback.next_steps : [];
+
+    summaryEl.textContent = feedback.summary || 'No summary provided by backend.';
+    reasonsEl.innerHTML = reasons.length
+      ? reasons.map(reason => `<li>${reason}</li>`).join('')
+      : '<li>No detailed reasons available.</li>';
+    nextEl.innerHTML = nextSteps.length
+      ? nextSteps.map(step => `<li>${step}</li>`).join('')
+      : '<li>No next-step guidance available.</li>';
+    wrap.style.display = 'block';
+  }
+
   panel.classList.add('visible');
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 
@@ -1892,6 +1967,8 @@ function showIdentificationResult(r){
   } else {
     topMatchesDiv.style.display = 'none';
   }
+
+  renderDecisionFeedback(r.feedback || null);
 
   if(identified){
     status.textContent  = `IDENTIFIED: ${r.speaker}`;
