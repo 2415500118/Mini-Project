@@ -2238,57 +2238,6 @@ window.persistUserEvent = async function(eventType, payload = {}) {
   }
 };
 
-function getHistoryMessage(entry){
-  const payload = entry.payload || {};
-  switch(entry.eventType){
-    case 'verification_attempt':
-      return payload.identified
-        ? `[DB] Verified ${payload.speaker || 'Unknown'} (${Number(payload.similarity || 0).toFixed(4)})`
-        : `[DB] No match (closest: ${payload.closestSpeaker || 'Unknown'}, sim=${Number(payload.similarity || 0).toFixed(4)})`;
-    case 'verification_error':
-      return `[DB] Verification error: ${payload.message || 'Unknown error'}`;
-    case 'speaker_enrolled':
-      return `[DB] Enrolled speaker: ${payload.speakerName || 'Unknown'}`;
-    case 'speaker_enroll_error':
-      return `[DB] Enrollment error: ${payload.message || 'Unknown error'}`;
-    case 'account_created':
-      return '[DB] Account created';
-    case 'session_started':
-      return '[DB] Session started';
-    case 'session_ended':
-      return '[DB] Session ended';
-    default:
-      return `[DB] ${entry.eventType}`;
-  }
-}
-
-async function showRecentHistoryInLog(user){
-  const events = await getRecentUserHistory(user, 8);
-  if(!events.length){
-    log('No prior history found in Realtime Database', 'info');
-    return;
-  }
-  log(`Loaded ${events.length} recent events from Realtime Database`, 'info');
-  events.slice().reverse().forEach(event => {
-    log(getHistoryMessage(event), 'info');
-  });
-}
-
-function showError(msg){
-  loginErr.textContent = msg;
-  loginErr.classList.add('visible');
-}
-function clearError(){ loginErr.classList.remove('visible'); }
-
-function setLoading(btn, loading){
-  btn.disabled = loading;
-  btn.textContent = loading ? 'PLEASE WAIT…' : btn.dataset.label;
-}
-
-document.querySelectorAll('.btn-login-primary').forEach(b=>{
-  b.dataset.label = b.textContent;
-});
-
 window.switchTab = function(tab){
   clearError();
   const isSignin = tab === 'signin';
@@ -2297,68 +2246,6 @@ window.switchTab = function(tab){
   document.getElementById('tab-signin').classList.toggle('active', isSignin);
   document.getElementById('tab-signup').classList.toggle('active', !isSignin);
 };
-
-let appInitialized = false;
-
-await onUserStateChanged(async user => {
-  if(user){
-    activeUser = user;
-    overlay.classList.add('hidden');
-    mainApp.style.display = '';
-    userBar.classList.add('visible');
-    userNameEl.textContent = (user.displayName || user.email || 'Operator').toUpperCase();
-
-    const idToken = await window.getVoxguardAccessToken(true);
-    const tokenPayload = parseJwt(idToken || '');
-    const role = String(tokenPayload.role || 'user').toLowerCase();
-    userRoleEl.textContent = role.toUpperCase();
-    userRoleEl.classList.toggle('admin', role === 'admin' || role === 'owner');
-    adminLinkEl.classList.toggle('visible', role === 'admin' || role === 'owner');
-
-    try {
-      await ensureUserProfile(user);
-
-      if(user.metadata?.creationTime && user.metadata?.lastSignInTime && user.metadata.creationTime === user.metadata.lastSignInTime){
-        await persistUserHistory(user, 'account_created', {
-          email: user.email || null,
-          displayName: user.displayName || null,
-        });
-      }
-
-      if(!sessionEventTrackedForUser.has(user.uid)){
-        await persistUserHistory(user, 'session_started', {
-          provider: user.providerData?.[0]?.providerId || 'password',
-        });
-        sessionEventTrackedForUser.add(user.uid);
-      }
-
-      await showRecentHistoryInLog(user);
-    } catch(err){
-      const msg = err.message || String(err);
-      if(msg.includes('Permission denied')){
-        log('Database rules not configured', 'warn');
-      } else {
-        log('Database sync issue: ' + msg, 'warn');
-      }
-    }
-
-    if(!appInitialized){
-      appInitialized = true;
-      log('VoxGuard initialized','ok');
-      log('Model loaded','info');
-      loadSpeakers();
-    }
-  } else {
-    activeUser = null;
-    tokenCache.token = null;
-    tokenCache.expMs = 0;
-    adminLinkEl.classList.remove('visible');
-    overlay.classList.remove('hidden');
-    mainApp.style.display = 'none';
-    userBar.classList.remove('visible');
-    appInitialized = false;
-  }
-});
 
 window.handleSignIn = async function(e){
   e.preventDefault(); clearError();
@@ -2420,6 +2307,124 @@ window.handleReset = async function(e){
     showError(friendlyError(err.code));
   }
 };
+
+function getHistoryMessage(entry){
+  const payload = entry.payload || {};
+  switch(entry.eventType){
+    case 'verification_attempt':
+      return payload.identified
+        ? `[DB] Verified ${payload.speaker || 'Unknown'} (${Number(payload.similarity || 0).toFixed(4)})`
+        : `[DB] No match (closest: ${payload.closestSpeaker || 'Unknown'}, sim=${Number(payload.similarity || 0).toFixed(4)})`;
+    case 'verification_error':
+      return `[DB] Verification error: ${payload.message || 'Unknown error'}`;
+    case 'speaker_enrolled':
+      return `[DB] Enrolled speaker: ${payload.speakerName || 'Unknown'}`;
+    case 'speaker_enroll_error':
+      return `[DB] Enrollment error: ${payload.message || 'Unknown error'}`;
+    case 'account_created':
+      return '[DB] Account created';
+    case 'session_started':
+      return '[DB] Session started';
+    case 'session_ended':
+      return '[DB] Session ended';
+    default:
+      return `[DB] ${entry.eventType}`;
+  }
+}
+
+async function showRecentHistoryInLog(user){
+  const events = await getRecentUserHistory(user, 8);
+  if(!events.length){
+    log('No prior history found in Realtime Database', 'info');
+    return;
+  }
+  log(`Loaded ${events.length} recent events from Realtime Database`, 'info');
+  events.slice().reverse().forEach(event => {
+    log(getHistoryMessage(event), 'info');
+  });
+}
+
+function showError(msg){
+  loginErr.textContent = msg;
+  loginErr.classList.add('visible');
+}
+function clearError(){ loginErr.classList.remove('visible'); }
+
+function setLoading(btn, loading){
+  btn.disabled = loading;
+  btn.textContent = loading ? 'PLEASE WAIT…' : btn.dataset.label;
+}
+
+document.querySelectorAll('.btn-login-primary').forEach(b=>{
+  b.dataset.label = b.textContent;
+});
+
+let appInitialized = false;
+
+try {
+  await onUserStateChanged(async user => {
+    if(user){
+      activeUser = user;
+      overlay.classList.add('hidden');
+      mainApp.style.display = '';
+      userBar.classList.add('visible');
+      userNameEl.textContent = (user.displayName || user.email || 'Operator').toUpperCase();
+
+      const idToken = await window.getVoxguardAccessToken(true);
+      const tokenPayload = parseJwt(idToken || '');
+      const role = String(tokenPayload.role || 'user').toLowerCase();
+      userRoleEl.textContent = role.toUpperCase();
+      userRoleEl.classList.toggle('admin', role === 'admin' || role === 'owner');
+      adminLinkEl.classList.toggle('visible', role === 'admin' || role === 'owner');
+
+      try {
+        await ensureUserProfile(user);
+
+        if(user.metadata?.creationTime && user.metadata?.lastSignInTime && user.metadata.creationTime === user.metadata.lastSignInTime){
+          await persistUserHistory(user, 'account_created', {
+            email: user.email || null,
+            displayName: user.displayName || null,
+          });
+        }
+
+        if(!sessionEventTrackedForUser.has(user.uid)){
+          await persistUserHistory(user, 'session_started', {
+            provider: user.providerData?.[0]?.providerId || 'password',
+          });
+          sessionEventTrackedForUser.add(user.uid);
+        }
+
+        await showRecentHistoryInLog(user);
+      } catch(err){
+        const msg = err.message || String(err);
+        if(msg.includes('Permission denied')){
+          log('Database rules not configured', 'warn');
+        } else {
+          log('Database sync issue: ' + msg, 'warn');
+        }
+      }
+
+      if(!appInitialized){
+        appInitialized = true;
+        log('VoxGuard initialized','ok');
+        log('Model loaded','info');
+        loadSpeakers();
+      }
+    } else {
+      activeUser = null;
+      tokenCache.token = null;
+      tokenCache.expMs = 0;
+      adminLinkEl.classList.remove('visible');
+      overlay.classList.remove('hidden');
+      mainApp.style.display = 'none';
+      userBar.classList.remove('visible');
+      appInitialized = false;
+    }
+  });
+} catch(err) {
+  console.error("Firebase Auth failed to initialize:", err);
+  showError("System Offline: Unable to connect to backend server.");
+}
 
 document.getElementById('signout-btn').addEventListener('click', async ()=>{
   if(activeUser){
