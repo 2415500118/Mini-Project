@@ -1,0 +1,144 @@
+
+> .quality-tip{margin-top:6px;font-family:var(--font-mono);font-size:.7rem;color:var(--a)}
+  
+  :root{
+    --bg:#f4f7fb;
+    --surface:#ffffff;
+    --card:#ffffff;
+    --border:#dbe6f2;
+    --c:#155eef;
+    --g:#0f9f6e;
+    --v:#5b3cc4;
+    --r:#c03863;
+    --a:#a66e13;
+    --text:#13283f;
+    --dim:#6b8298;
+    --font-hd:'Manrope',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+    --font-body:'Manrope',sans-serif;
+  }
+  
+  body{cursor:default}
+  
+  #cursor,
+  #cursor-dot,
+  #bg-canvas,
+  body::after,
+  .ring,
+  .logo-icon{display:none !important}
+  
+  .site-title,
+  .site-sub,
+  .panel,
+  .drop-icon,
+  .hud-dot,
+  .btn-record.recording,
+  .result-status.status-auth,
+  .result-status.status-deny,
+  .speaker-item,
+  .log-line{animation:none !important}
+  
+  header,
+  .panel,
+  .result-card,
+  .detail-chip,
+  .top-matches,
+  .speaker-item,
+  .log-wrap,
+  .waveform-wrap,
+  .spec-wrap,
+  .drop-zone,
+  .quality-card,
+  .login-box,
+  .modal-box,
+  .toast{box-shadow:none !important}
+  
+  .app{max-width:1140px}
+  
+  .site-title{
+    background:none;
+    -webkit-text-fill-color:unset;
+    color:#16324a;
+    letter-spacing:.04em;
+    font-weight:800;
+    filter:none;
+  }
+  
+  .site-sub{color:#607c95; letter-spacing:.18em}
+  
+  .panel,
+  .login-box,
+  .modal-box,
+  .result-card,
+>           <div class="quality-tip" id="q-tip">Tip: Speak steadily 8-15 cm from the mic for 3-5 seconds.</div>
+          </div>
+        </div>
+  
+        <button class="btn btn-primary" id="identify-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          IDENTIFY SPEAKER
+        </button>
+        <div class="spinner" id="auth-spinner"></div>
+      </div>
+  
+      <div class="panel framed">
+        <div class="fr-b"></div>
+        <div class="panel-label">Enrolled Speakers</div>
+        <div class="speaker-list" id="speaker-list">
+          <div style="color:var(--dim);font-family:var(--font-mono);font-size:.8rem;text-align:center;padding:20px">
+            Loading database…
+          </div>
+        </div>
+      </div>
+  
+      <div class="panel framed">
+        <div class="fr-b"></div>
+        <div class="panel-label">System Log</div>
+        <div class="log-wrap" id="log-wrap"></div>
+      </div>
+  
+      <div class="panel panel-full framed" id="result-panel">
+        <div class="fr-b"></div>
+        <div class="panel-label">Identification Result</div>
+        <div class="result-card">
+          <div class="holo-ring">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#0d2a4a" stroke-width="8"/>
+              <circle id="progress-circle" class="progress-circle" cx="50" cy="50" r="44"
+                fill="none" stroke="#00e5ff" stroke-width="8"
+                stroke-dasharray="276.46" stroke-dashoffset="276.46"
+                stroke-linecap="round"/>
+              <text x="50" y="56" text-anchor="middle"
+                font-family="Orbitron,sans-serif" font-size="18" font-weight="700"
+                fill="#00e5ff" id="ring-pct">--</text>
+            </svg>
+          </div>
+  
+          <div class="result-status" id="result-status">AWAITING INPUT</div>
+  
+          <div class="sim-meter">
+            <div class="sim-track">
+              <div class="sim-fill" id="sim-fill"></div>
+            </div>
+            <div class="sim-labels"><span>0.0</span><span id="threshold-marker">▲ 0.60</span><span>1.0</span></div>
+          </div>
+  
+          <div class="result-details">
+            <div class="detail-chip">
+              <div class="chip-label">SPEAKER IDENTIFIED</div>
+              <div class="chip-val" id="chip-spk">—</div>
+            </div>
+            <div class="detail-chip">
+              <div class="chip-label">SIMILARITY SCORE</div>
+              <div class="chip-val" id="chip-sim">—</div>
+            </div>
+            <div class="detail-chip">
+              <div class="chip-label">CONFIDENCE</div>
+              <div class="chip-val" id="chip-conf">—</div>
+            </div>
+            <div class="detail-chip">
+              <div class="chip-label">STATUS</div>
+              <div class="chip-val" id="chip-status">—</div>
+            </div>
+          </div>
+

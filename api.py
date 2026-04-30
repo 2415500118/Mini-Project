@@ -48,7 +48,7 @@ FIREBASE_CONFIG = {
     "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
     "appId":             os.getenv("FIREBASE_APP_ID"),
     "measurementId":     os.getenv("FIREBASE_MEASUREMENT_ID"),
-    "databaseURL":       os.getenv("FIREBASE_DATABASE_URL"),
+    "databaseURL":       os.getenv("FIREBASE_DATABASE_URL", ""),
 }
 
 AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "true").lower() == "true"
@@ -445,7 +445,9 @@ async def admin_page():
 
 @app.get("/firebase-config")
 async def get_firebase_config():
-    missing = [k for k, v in FIREBASE_CONFIG.items() if not v]
+    # Only enforce required core fields for initialization
+    required_keys = ["apiKey", "authDomain", "projectId", "appId"]
+    missing = [k for k in required_keys if not FIREBASE_CONFIG.get(k)]
     if missing:
         return JSONResponse(
             content={"configured": False, "missing": missing},

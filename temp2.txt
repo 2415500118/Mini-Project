@@ -1,0 +1,203 @@
+
+    animation:toastIn .4s ease both;
+    min-width:260px;
+  }
+  .toast.error{border-color:var(--r);color:var(--r);box-shadow:var(--glow-r)}
+  @keyframes toastIn{
+    from{opacity:0;transform:translateX(40px)}
+    to{opacity:1;transform:translateX(0)}
+  }
+  @keyframes toastOut{
+    from{opacity:1;transform:translateX(0)}
+    to{opacity:0;transform:translateX(40px)}
+  }
+  
+  .particles-overlay{
+    position:fixed;inset:0;pointer-events:none;z-index:9000;display:none;
+  }
+  .particles-overlay.active{display:block}
+  
+  .modal-overlay{
+    position:fixed;inset:0;z-index:9500;
+    background:rgba(0,0,0,.8);
+    display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(4px);
+    animation:modalFadeIn .3s ease both;
+  }
+  .modal-overlay.hidden{display:none}
+  @keyframes modalFadeIn{
+    from{opacity:0}to{opacity:1}
+  }
+  
+> .modal-box{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:32px;
+    max-width:420px;width:90%;
+    position:relative;
+    animation:modalSlide .3s cubic-bezier(.22,1,.36,1) both;
+    max-height:80vh;overflow-y:auto;
+  }
+  @keyframes modalSlide{
+    from{opacity:0;transform:scale(.92) translateY(-20px)}
+    to{opacity:1;transform:scale(1) translateY(0)}
+  }
+  
+  .modal-content{position:relative;z-index:2}
+  .modal-text{
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:.85rem;
+    line-height:1.5;
+    margin-bottom:8px;
+  }
+  
+  .modal-info{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:12px 16px;
+    font-family:var(--font-mono);
+    font-size:.85rem;
+  #cursor,
+  #cursor-dot,
+  #bg-canvas,
+  body::after,
+  .ring,
+  .logo-icon{display:none !important}
+  
+  .site-title,
+  .site-sub,
+  .panel,
+  .drop-icon,
+  .hud-dot,
+  .btn-record.recording,
+  .result-status.status-auth,
+  .result-status.status-deny,
+  .speaker-item,
+  .log-line{animation:none !important}
+  
+  header,
+  .panel,
+  .result-card,
+  .detail-chip,
+  .top-matches,
+  .speaker-item,
+  .log-wrap,
+  .waveform-wrap,
+  .spec-wrap,
+  .drop-zone,
+  .quality-card,
+  .login-box,
+> .modal-box,
+  .toast{box-shadow:none !important}
+  
+  .app{max-width:1140px}
+  
+  .site-title{
+    background:none;
+    -webkit-text-fill-color:unset;
+    color:#16324a;
+    letter-spacing:.04em;
+    font-weight:800;
+    filter:none;
+  }
+  
+  .site-sub{color:#607c95; letter-spacing:.18em}
+  
+  .panel,
+  .login-box,
+> .modal-box,
+  .result-card,
+  .detail-chip,
+  .top-matches{border-radius:12px}
+  
+  .panel:hover{border-color:#c5d6e8; box-shadow:none}
+  
+  .btn-primary{background:#155eef; color:#fff}
+  
+  .btn-record{background:#cc3366; color:#fff}
+  
+  .btn-modal.enroll{background:#0f9f6e}
+  
+  .hud-item{color:#607c95}
+  
+  .drop-zone:hover,.drop-zone.drag-over{background:#f1f6ff; border-color:#9bb8dc}
+  
+  .admin-link{color:var(--c)}
+  .admin-link:hover{border-color:var(--g);color:var(--g)}
+  
+  .footer,
+  footer{color:#6f879f; letter-spacing:.08em}
+  </style>
+  </head>
+  <body>
+  
+  <div id="cursor"></div>
+  <div id="cursor-dot"></div>
+  
+  <canvas id="bg-canvas"></canvas>
+  
+          <div class="decision-feedback" id="decision-feedback" style="display:none">
+            <div class="decision-feedback-title">Decision Feedback</div>
+            <p class="decision-feedback-summary" id="decision-feedback-summary">-</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <div class="decision-feedback-title" style="margin-bottom:6px">Reasons</div>
+                <ul class="decision-feedback-list" id="decision-feedback-reasons"></ul>
+              </div>
+              <div>
+                <div class="decision-feedback-title" style="margin-bottom:6px">Next Steps</div>
+                <ul class="decision-feedback-list" id="decision-feedback-next"></ul>
+              </div>
+            </div>
+          </div>
+  
+          <div class="wiki-redirect-wrap" id="wiki-redirect-wrap">
+            <a id="wiki-btn" class="wiki-btn" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              VIEW ON WIKIPEDIA
+            </a>
+            <div class="wiki-countdown" id="wiki-countdown"></div>
+          </div>
+        </div>
+      </div>
+  
+      <div id="enrollment-modal" class="modal-overlay hidden">
+>       <div class="modal-box framed">
+          <div class="fr-b"></div>
+          <div class="panel-label" style="margin-bottom:24px">Register New Speaker</div>
+          
+          <div class="modal-content">
+            <p class="modal-text">No matching speaker found in database.</p>
+            <p class="modal-text" style="margin-bottom:20px">Please provide a name for this speaker to add them to the system.</p>
+            
+            <div class="field">
+              <label>SPEAKER NAME</label>
+              <input type="text" id="enroll-name-input" placeholder="e.g., John_Doe" maxlength="50"/>
+            </div>
+  
+            <div class="field">
+              <label>SIMILARITY SCORE</label>
+              <div class="modal-info" id="enroll-similarity">0.0000</div>
+            </div>
+  
+            <div class="field" style="margin-bottom:28px">
+              <label>AUDIO FILE</label>
+              <div class="modal-info" id="enroll-filename">recording.wav</div>
+            </div>
+  
+            <div class="modal-actions">
+              <button class="btn btn-modal cancel" id="enroll-cancel-btn">CANCEL</button>
+              <button class="btn btn-modal enroll" id="enroll-submit-btn">ADD TO DATABASE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+
